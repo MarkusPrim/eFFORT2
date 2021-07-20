@@ -1,3 +1,7 @@
 venv/
+effort2/examples/.ipynb_checkpoints/
+*.egg-info
 
 *.un~
+*.pyc
+*.pyo
