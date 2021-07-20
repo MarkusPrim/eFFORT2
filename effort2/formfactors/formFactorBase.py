@@ -1,6 +1,6 @@
 import abc
 
-class FormFactor(abc.ABC)
+class FormFactor(abc.ABC):
 
     def __init__(self, m_B, m_M) -> None:
         r"""This class defines the interface to the rate implementations.
@@ -11,7 +11,7 @@ class FormFactor(abc.ABC)
             m_B (float): Mass of the B meson.
             m_M (float): Mass of the final state meson.
         """
-        super().__init__()
+        super(FormFactor, self).__init__()
         self.m_B = m_B
         self.m_M = m_M
 
