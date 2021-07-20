@@ -63,14 +63,18 @@ class BtoV:
         def Hzero(self, w: float):
             return self.FF.Hzero(w)
 
+
         def Hplus(self, w: float):
             return self.FF.Hzero(w)
+
 
         def Hminus(self, w: float):
             return self.FF.Hzero(w)
 
+
         def Hscalar(self, w: float):
             return self.FF.Hzero(w)
+
 
         def dGamma_dw_dcosL_dcosV_dchi(
             self, 
@@ -80,6 +84,9 @@ class BtoV:
             chi: float
             ) -> float:
             """Full 4D differential decay rate for B to V(ector) meson decays.
+
+            Recommended use cases: 
+                * Form factor reweighting.
 
             Args:
                 w (float): Recoil against the hadronic system.
@@ -102,7 +109,7 @@ class BtoV:
             )
 
 
-        def dGamma_dw_DcosL_DcosV_Dchi(
+        def DGamma_Dw_DcosL_DcosV_Dchi(
             self,
             w: float,
             cosLmin: float,
@@ -114,10 +121,14 @@ class BtoV:
             ) -> float:
             """The differential decay rate for B to V(ector) meson decays, where the angular variables are analytically integrated.
             
-            The integration over w is not performed, because this would introduce a dependency on the chosen form factor parametrization.
+            The integration over w is performed numerically, because analyitcal integration would introduce a dependency on the chosen form factor parametrization.
+
+            Recommended use case:
+                * Fitting. The class also provides interfaces to the marginalized distributions directly.
 
             Args:
-                w (float): Recoil against the hadronic system.
+                wmin (float): Recoil against the hadronic system lower boundary.
+                wmax (float): Recoil against the hadronic system upper boundary.
                 cosLmin (float): Lepton angle lower boundary.
                 cosLmax (float): Lepton angle upper boundary.
                 cosVmin (float): Vector meson angle lower boundary.
@@ -126,7 +137,7 @@ class BtoV:
                 chimax (float): Decay plane angle upper boundary.
 
             Returns:
-                float: Rate at the requested phase space point w, within the marginalized region of the angular phase space.
+                float: Rate in the marginalized region of the phase space.
             """
             assert self.w_min <= w <= self.w_max
             assert self.cosL_min <= cosLmin < cosLmax <= self.cosL_max
@@ -160,47 +171,161 @@ class BtoV:
                 - 4 / 3. * (chimax - chimin) * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * self.H0(w) ** 2
             )
 
+
         def DGamma_Dw(self, wmin: float, wmax: float) -> float:
-            assert self.w_min <= wmin < wmax <= self.w_max
-            return scipy.integrate.quad(lambda w: dGamma_dw_DcosL_DcosV_Dchi(w, self.cosL_min, self.cosL_max, self.cosV_min, self.cosV_max, self.chi_min, self.chi_max), wmin, wmax)[0]
+            """[summary]
+
+            Recommended use cases:
+                * Fitting.
+
+            Args:
+                wmin (float): [description]
+                wmax (float): [description]
+
+            Returns:
+                float: [description]
+            """
+            return DGamma_Dw_DcosL_DcosV_Dchi(wmin, wmax, self.cosL_min, self.cosL_max, self.cosV_min, self.cosV_max, self.chi_min, self.chi_max)
 
 
-        def DGamma_Dw_DcosL(self, wmin: float, wmax: float, cosLmin: float, cosLmax: float) -> float:
-            assert self.w_min <= wmin < wmax <= self.w_max
-            assert self.cosL_min <= cosLmin < cosLmax <= self.cosL_max
-            return scipy.integrate.quad(lambda w: dGamma_dw_DcosL_DcosV_Dchi(w, cosLmin, cosLmax, self.cosV_min, self.cosV_max, self.chi_min, self.chi_max), wmin, wmax)[0]
+        def DGamma_DcosL(self, cosLmin: float, cosLmax: float) -> float:
+            """[summary]
+
+            Recommended use cases:
+                * Fitting.
+
+            Args:
+                cosLmin (float): [description]
+                cosLmax (float): [description]
+
+            Returns:
+                float: [description]
+            """
+            return DGamma_Dw_DcosL_DcosV_Dchi(self.w_min, self.w_max, cosLmin, cosLmax, self.cosV_min, self.cosV_max, self.chi_min, self.chi_max)
 
 
-        def DGamma_Dw_DcosV(self, wmin: float, wmax: float, cosVmin: float, cosVmax: float) -> float:
-            assert self.w_min <= wmin < wmax <= self.w_max
-            assert self.cosV_min <= cosVmin < cosVmax <= self.cosV_max
-            return scipy.integrate.quad(lambda w: dGamma_dw_DcosL_DcosV_Dchi(w, self.cosL_min, self.cosL_max, cosVmin, cosVmax, self.chi_min, self.chi_max), wmin, wmax)[0]
+        def DGamma_DcosV(self, cosVmin: float, cosVmax: float) -> float:
+            """[summary]
+
+            Recommended use cases:
+                * Fitting.
+
+            Args:
+                cosVmin (float): [description]
+                cosVmax (float): [description]
+
+            Returns:
+                float: [description]
+            """
+            return DGamma_Dw_DcosL_DcosV_Dchi(self.w_min, self.w_max, self.cosL_min, self.cosL_max, cosVmin, cosVmax, self.chi_min, self.chi_max)
 
 
-        def DGamma_Dw_Dchi(self, wmin: float, wmax: float, chimin: float, chimax: float) -> float:
-            assert self.w_min <= wmin < wmax <= self.w_max
-            assert self.chi_min <= chimin < chimax <= self.chi_max
-            return scipy.integrate.quad(lambda w: dGamma_dw_DcosL_DcosV_Dchi(w, self.cosL_min, self.cosL_max, self.cosV_min, self.cosV_max, chimin, chimax), wmin, wmax)[0]
+        def DGamma_Dchi(self, chimin: float, chimax: float) -> float:
+            """[summary]
+            
+            Recommended use cases:
+                * Fitting.
 
+            Args:
+                chimin (float): [description]
+                chimax (float): [description]
 
-        def DGamma_DcosL_DcosV(self, cosLmin: float, cosLmax: float, cosVmin: float, cosVmax: float) -> float:
-            assert self.cosL_min <= cosLmin < cosLmax <= self.cosL_max
-            assert self.cosV_min <= cosVmin < cosVmax <= self.cosV_max
-            return scipy.integrate.quad(lambda w: dGamma_dw_DcosL_DcosV_Dchi(w, cosLmin, cosLmax, cosVmin, cosVmax, self.chi_min, self.chi_max), self.w_min, self.w_max)[0]
-
-
-        def DGamma_DcosL_Dchi(self, cosLmin: float, cosLmax: float, chimin: float, chimax: float) -> float:
-            assert self.cosL_min <= cosLmin < cosLmax <= self.cosL_max
-            assert self.chi_min <= chimin < chimax <= self.chi_max
-            return scipy.integrate.quad(lambda w: dGamma_dw_DcosL_DcosV_Dchi(w, cosLmin, cosLmax, self.cosV_min, self.cosV_max, chimin, chimax), self.w_min, self.w_max)[0]
-
-
-        def DGamma_DcosL_Dchi(self, cosVmin: float, cosVmax: float, chimin: float, chimax: float) -> float:
-            assert self.cosV_min <= cosVmin < cosVmax <= self.cosV_max
-            assert self.chi_min <= chimin < chimax <= self.chi_max
-            return scipy.integrate.quad(lambda w: dGamma_dw_DcosL_DcosV_Dchi(w, self.cosL_min, self.cosL_max, cosVmin, cosVmax, chimin, chimax), self.w_min, self.w_max)[0]
+            Returns:
+                float: [description]
+            """
+            return DGamma_Dw_DcosL_DcosV_Dchi(self.w_min, self.w_max, self.cosL_min, self.cosL_max, self.cosV_min, self.cosV_max, chimin, chimax)
 
 
         def dGamma_dw(self, w: float) -> float:
+            """[summary]
+
+            Nota bene:
+                * Not fully generalized (yet), cosL, cosV and chi are integrated over the full range.
+
+            Recommended use cases:
+                * Plotting.
+
+            Args:
+                w (float): [description]
+
+            Returns:
+                float: [description]
+            """
             assert self.w_min <= w <= self.w_max
-            return dGamma_dw_DcosL_DcosV_Dchi(w, self.cosL_min, self.cosL_max, self.cosV_min, self.cosV_max, self.chi_min, self.chi_max)
+            f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
+            return f(w) / 3 * self.N0 * (64 / 3. * np.pi * self.Hminus(w) ** 2 + 64 / 3. * np.pi * self.Hplus(w) ** 2 + 64 / 3. * np.pi * self.Hzero(w) ** 2)
+
+
+        def dGamma_cosL(self, cosL: float) -> float:
+            """[summary]
+
+            Nota bene:
+                * Not fully generalized (yet), w, cosV and chi are integrated over the full range.
+
+            Recommended use cases:
+                * Plotting.
+
+            Args:
+                cosL (float): [description]
+
+            Returns:
+                float: [description]
+            """
+            assert self.cosL_min <= cosL <= self.cosL_max
+            f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
+
+            return scipy.integrate.quad(
+                lambda w: f(w) / 3 * self.N0 * (8 * (1 + cosL) ** 2 * np.pi * self.Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * self.Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * self.H0(w) ** 2),
+                self.wmin,
+                self.wmax
+            )
+
+
+        def dGamma_cosV(self, cosV: float) -> float:
+            """[summary]
+
+            Nota bene:
+                * Not fully generalized (yet), w, cosL and chi are integrated over the full range.
+
+            Recommended use cases:
+                * Plotting.
+
+            Args:
+                cosV (float): [description]
+
+            Returns:
+                float: [description]
+            """
+            assert self.cosV_min <= cosV <= self.cosV_max
+            f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
+
+            return scipy.integrate.quad(
+                lambda w: f(w) / 3 * self.N0 (-16 * (-1 + cosV ** 2) * np.pi * self.Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * self.Hplus(w) ** 2 + 32 cosV ** 2 * np.pi * self.H0(w) ** 2),
+                self.wmin,
+                self.wmax
+            )
+
+
+        def dGamma_chi(self, cosL: float) -> float:
+            """[summary]
+
+            Nota bene:
+                * Not fully generalized (yet), w, cosL and cosV are integrated over the full range.
+
+            Recommended use cases:
+                * Plotting.
+
+            Args:
+                cosL (float): [description]
+
+            Returns:
+                float: [description]
+            """
+            assert self.chi_min <= chi <= self.chi_max
+            f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
+
+            return scipy.integrate.quad(
+                lambda w: f(w) / 9 * self.N0 * (32 * self.Hminus(w) ** 2 - 32 * np.cos(2 * chi) * self.Hminus(w) * self.Hplus(w) + 32 * self.Hplus(w) ** 2 + 32 * self.Hzero(w) ** 2), 
+                self.w_min, 
+                self.w_max
+                )
