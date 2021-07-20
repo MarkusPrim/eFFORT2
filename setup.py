@@ -22,7 +22,7 @@ spectra.
         'scipy',
     ],
     extras_require={
-        "examples":  ['matplotlib'],
+        "examples":  ['matplotlib', 'jupyterlab'],
     },
     long_description=readme,
     long_description_content_type='text/markdown',
