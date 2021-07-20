@@ -11,9 +11,11 @@ class FormFactor(abc.ABC):
             m_B (float): Mass of the B meson.
             m_M (float): Mass of the final state meson.
         """
-        super(FormFactor, self).__init__()
+        super().__init__()
         self.m_B = m_B
         self.m_M = m_M
+        self.w_min = 1
+        self.w_max = (m_B ** 2 + m_M ** 2) / (2 * m_B * m_M)
 
 
     @abc.abstractmethod
