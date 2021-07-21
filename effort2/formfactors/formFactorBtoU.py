@@ -22,57 +22,29 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
             m_L (float): Mass of the final state lepton. Defaults to 0 (zero lepton mass approximation).
         """
         super().__init__(m_B, m_M, m_L)
-        
-        
+
+
     def kaellen(self, q2):
         return ((self.m_B + self.m_M) ** 2 - q2) * ((self.m_B - self.m_M) ** 2 - q2)
 
 
-    def Hplus(self, q2: float) -> float:
-        r"""Helicity ampltiude $H_+$.
-
-        Args:
-            q2 ([type]): momentum transfer to the leptonic system
-
-        Returns:
-            [type]: absolute value of the helicity amplitude
-        """
+    def Hplus(self, w: float) -> float:
+        q2 = self.q2(w)
         return self.kaellen(q2) ** 0.5 * self.V(q2) / (self.m_B + self.m_M) + (self.m_B + self.m_M) * self.A1(q2)
 
 
-    def Hminus(self, q2: float) -> float:
-        r"""Helicity ampltiude $H_-$.
-
-        Args:
-            q2 ([type]): momentum transfer to the leptonic system
-
-        Returns:
-            [type]: absolute value of the helicity amplitude
-        """
+    def Hminus(self, w: float) -> float:
+        q2 = self.q2(w)
         return self.kaellen(q2) ** 0.5 * self.V(q2) / (self.m_B + self.m_M) - (self.m_B + self.m_M) * self.A1(q2)
 
 
-    def Hzero(self, q2: float) -> float:
-        r"""Helicity ampltiude $H_0$.
-
-        Args:
-            q2 ([type]): momentum transfer to the leptonic system
-
-        Returns:
-            [type]: absolute value of the helicity amplitude
-        """
+    def Hzero(self, w: float) -> float:
+        q2 = self.q2(w)
         return 8 * self.m_B * self.m_M / q2 ** 0.5 * self.A12(q2)
 
 
-    def Hscalar(self, q2: float) -> float:
-        r"""Helicity ampltiude $H_s$. Only relevant when *not* using the zero lepton mass approximation in the rate expression.
-
-        Args:
-            q2 ([type]): momentum transfer to the leptonic system
-
-        Returns:
-            [type]: absolute value of the helicity amplitude
-        """
+    def Hscalar(self, w: float) -> float:
+        q2 = self.q2(w)
         return self.kaellen(q2) ** 0.5 / q2 ** 0.5 * self.A0(q2)
 
 
@@ -140,9 +112,9 @@ class BToRhoBSZ(FormFactorBToU):
         A1_i: tuple,
         A12_i: tuple,
         V_i: tuple,
-        T1_i: tuple,
-        T2_i: tuple,
-        T23_i: tuple
+        T1_i: tuple = (),
+        T2_i: tuple = (),
+        T23_i: tuple = (),
         ) -> None:
         """Sets the expansion coefficients and imposes the constraint on alpha_A0_0 and alpha_T2_0.
 
@@ -162,16 +134,19 @@ class BToRhoBSZ(FormFactorBToU):
             A1_i (tuple): Expansion coefficients for the form factor A1.
             A12_i (tuple): Expansion coefficients for the form factor A12.
             V_i (tuple): Expansion coefficients for the form factor V.
-            T1_i (tuple): Expansion coefficients for the form factor T1.
-            T2_i (tuple): Expansion coefficients for the form factor T2.
-            T23_i (tuple): Expansion coefficients for the form factor T23.
+            T1_i (tuple): Expansion coefficients for the form factor T1. Not required for the SM calculations here.
+            T2_i (tuple): Expansion coefficients for the form factor T2. Not required for the SM calculations here.
+            T23_i (tuple): Expansion coefficients for the form factor T23. Not required for the SM calculations here.
         """
         self.expansion_coefficients_A0 = [8 * self.m_B * self.m_M / (self.m_B ** 2 - self.m_M ** 2) * A12_i[0], *A0_i]
         self.expansion_coefficients_A1 = [*A1_i]
         self.expansion_coefficients_A12 = [*A12_i]
         self.expansion_coefficients_V = [*V_i]
         self.expansion_coefficients_T1 = [*T1_i]
-        self.expansion_coefficients_T2 = [T1_i[0], *T2_i]
+        try:
+            self.expansion_coefficients_T2 = [T1_i[0], *T2_i]
+        except IndexError:
+            self.expansion_coefficients_T2 = []
         self.expansion_coefficients_T23 = [*T23_i]
 
 
@@ -198,32 +173,31 @@ class BToRhoBSZ(FormFactorBToU):
 
 
     def A1(self, q2):
-        m_pole = 5.724
         return self.form_factor(q2, self.pole_masses["A1"], self.expansion_coefficients_A1)
 
 
     def A12(self, q2):
-        m_pole = 5.724
         return self.form_factor(q2, self.pole_masses["A12"], self.expansion_coefficients_A12)
 
 
+    def A2(self, q2):
+        return ((self.m_B + self.m_M) ** 2 * (self.m_B ** 2 - self.m_M ** 2 - q2) * self.A1(w)
+            - 16 * self.m_B * self.m_M ** 2 * (self.m_B + self.m_M) * self.A12(w)) / (2 * self.m_B * self.m_M) ** 2
+
+
     def V(self, q2):
-        m_pole = 5.325
         return self.form_factor(q2, self.pole_masses["V"], self.expansion_coefficients_V)
 
 
     def T1(self, q2):
-        m_pole = 5.325
         return self.form_factor(q2, self.pole_masses["T1"], self.expansion_coefficients_T1)
 
 
     def T2(self, q2):
-        m_pole = 5.724
         return self.form_factor(q2, self.pole_masses["T2"], self.expansion_coefficients_T2)
 
 
     def T23(self, q2):
-        m_pole = 5.724
         return self.form_factor(q2, self.pole_masses["T23"], self.expansion_coefficients_T23)
 
 
