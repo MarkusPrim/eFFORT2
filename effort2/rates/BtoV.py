@@ -25,12 +25,13 @@ class BtoV:
             * If you use a form factor parametrization where you can/want to absorb eta_EW and/or Vcb into the definition of the form factor, initialize this class setting both values as 1.
             * The class does not provide marginalizations over w, because this would make the analytical integration dependent on the chosen form factor parametrization. Numerical integration over w is therefore required in many applications.
             * Using the exact boundaries of w on the integration process might cause issues. Try adding/subtracting an epsilon to wmin/wmax to resolve the issue.
+            * It is possible that you are using a different sign convention for the helicity. This corresponds to a transformation cosL -> 1 - cosL.
 
         Args:
             Vcb (float): CKM parameter Vcb.
             m_B (float): B meson mass. It is assumed that this value will never change when handling caches.
             m_V (float): V(ector) meson mass. It is assumed that this value will never change when handling caches.
-            G_F (float): Effective coupling constant of the weak interaction (Fermi's constant) in units of GeV^-2. Default value from: https://pdg.lbl.gov/2020/reviews/rpp2020-rev-phys-constants.pdf It is assumed that this value will never change when handling caches.
+            G_F (float): Effective coupling constant of the weak interaction (Fermi's constant) in units of GeV^-2. Default value from: https://pdg.lbl.gov/2020/reviews/rpp2020-rev-phys-constants.pdf.
             eta_EW (float): Electroweak corrections.
             BR_Dstar_decay (float, optional): In case the D* meson decay is not treated fully inclusive (BR < 1). It is assumed that this value will never change when handling caches.
         """
