@@ -9,14 +9,20 @@ class FormFactorBToC(FormFactor):
 for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands for Pseudoscalar and V stands for Vector heavy mesons.
     """
 
-    def __init__(self, m_B, m_M) -> None:
+    def __init__(
+        self, 
+        m_B: float, 
+        m_M: float, 
+        m_L: float = 0
+        ) -> None:
         r"""[summary]
 
         Args:
             m_B (float): Mass of the B meson.
             m_M (float): Mass of the final state meson.
+            m_L (float): Mass of the final state lepton. Defaults to 0 (zero lepton mass approximation).
         """
-        super().__init__(m_B, m_M)
+        super().__init__(m_B, m_M, m_L)
         self.rprime = 2 * np.sqrt(self.m_B * self.m_M) / (self.m_B + self.m_M)
 
 
@@ -197,7 +203,7 @@ class BToDStarBGL(FormFactorBToC):
             * b0, b1, ...
             * c1, c2 ...
         and automaticalle imposes the constraint on c0. 
-        The order for the coefficients can be chosen arbitrarily.
+        The order for the expansion can be chosen arbitrarily.
 
         Args:
             exp_coeff_a ([tuple]): Expansion coefficients for the form factor g.
@@ -287,3 +293,4 @@ class BToDStarBGL(FormFactorBToC):
         """
 
         return 1 / (p(z) * phi(z)) * sum([a_i * z ** n for n, a_i in enumerate(a)])
+
