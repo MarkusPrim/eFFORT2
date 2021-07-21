@@ -43,12 +43,12 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
 
 
     def Hplus(self, w: float) -> float:
-        return (self.m_B + self.m_M) * self.A1(w) - 2 * self.m_B / (self.m_B + self.m_M) * self.m_M * (
+        return (self.m_B + self.m_M) * self.A1(w) + 2 * self.m_B / (self.m_B + self.m_M) * self.m_M * (
                 w ** 2 - 1) ** 0.5 * self.V(w)
 
 
     def Hminus(self, w: float) -> float:
-        return (self.m_B + self.m_M) * self.A1(w) + 2 * self.m_B / (self.m_B + self.m_M) * self.m_M * (
+        return -(self.m_B + self.m_M) * self.A1(w) + 2 * self.m_B / (self.m_B + self.m_M) * self.m_M * (
                 w ** 2 - 1) ** 0.5 * self.V(w)
 
 
