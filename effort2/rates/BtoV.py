@@ -17,6 +17,7 @@ class BtoV:
         """Initialize a class for calculating decay rate of B to Vector meson decays.
 
         TODO: 
+            * Full lepton mass effects.
             * Add Glebsch Gordan coefficient to differ between B+ and B0 decays.
             * Test the pre integrated rate vs numerical integration of the full rate.
 
