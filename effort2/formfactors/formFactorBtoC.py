@@ -1,5 +1,7 @@
 import abc
 import numpy as np
+import numba as nb
+import functools
 
 from effort2.formfactors.formFactorBase import FormFactor
 
@@ -84,7 +86,10 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
         pass
 
 
-    def z(self, w: float) -> float:
+    #@functools.lru_cache()
+    @staticmethod
+    @nb.njit(cache=True)
+    def z(w: float) -> float:
         """Variable for the expansion used in BGL and CLN.
 
         Args:
@@ -235,47 +240,76 @@ class BToDStarBGL(FormFactorBToC):
 
 
     def g(self, z):
-        return self.BGL_form_factor(z, lambda x: self.blaschke_factor(x, self.vector_poles), self.phi_g,
+        return self.BGL_form_factor(z, lambda x: self.blaschke_factor_vector(x), self.phi_g,
                                self.expansion_coefficients_a)
 
 
     def f(self, z):
-        return self.BGL_form_factor(z, lambda x: self.blaschke_factor(x, self.axialvector_poles), self.phi_f,
+        return self.BGL_form_factor(z, lambda x: self.blaschke_factor_axialvector(x), self.phi_f,
                                self.expansion_coefficients_b)
 
 
     def F1(self, z):
-        return self.BGL_form_factor(z, lambda x: self.blaschke_factor(x, self.axialvector_poles), self.phi_F1,
+        return self.BGL_form_factor(z, lambda x: self.blaschke_factor_axialvector(x), self.phi_F1,
                                self.expansion_coefficients_c)
 
 
-    def blaschke_factor(self, z, poles):
-        return np.multiply.reduce([(z - self.z_p(m_pole)) / (1 - z * self.z_p(m_pole)) for m_pole in poles])
+    @functools.lru_cache()
+    def blaschke_factor_vector(self, z):
+        return np.multiply.reduce([(z - self.z_p(m_pole)) / (1 - z * self.z_p(m_pole)) for m_pole in self.vector_poles])
+
+    
+    @functools.lru_cache()
+    def blaschke_factor_axialvector(self, z):
+        return np.multiply.reduce([(z - self.z_p(m_pole)) / (1 - z * self.z_p(m_pole)) for m_pole in self.axialvector_poles])
 
 
+    @functools.lru_cache()
     def z_p(self, m_pole):
-        m_B = self.m_B
-        m_M = self.m_M
+        return self._z_p(m_pole, self.m_B, self.m_M)
+
+
+    @staticmethod
+    @nb.njit(cache=True)
+    def _z_p(m_pole, m_B, m_M):
         term1 = ((m_B + m_M) ** 2 - m_pole ** 2) ** 0.5
         term2 = ((m_B + m_M) ** 2 - (m_B - m_M) ** 2) ** 0.5
         return (term1 - term2) / (term1 + term2)
  
 
+    @functools.lru_cache()
     def phi_g(self, z):
-        r = self.r
-        return (256 * self.n_i / 3 / np.pi / self.chiT_plus33) ** 0.5 \
+        return self._phi_g(z, self.r, self.n_i, self.chiT_plus33)        
+ 
+
+    @staticmethod
+    @nb.jit(cache=True)
+    def _phi_g(z, r, n_i, chiT_plus33):
+        return (256 * n_i / 3 / np.pi / chiT_plus33) ** 0.5 \
                 * r ** 2 * (1 + z) ** 2 * (1 - z) ** -0.5 / ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** 4
- 
 
+
+    @functools.lru_cache()
     def phi_f(self, z):
-        r = self.r
-        return 1 / self.m_B ** 2 * (16 * self.n_i / 3 / np.pi / self.chiT_minus33) ** 0.5 \
-                * r * (1 + z) * (1 - z) ** (3. / 2) / ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** 4
+        return self._phi_f(z, self.r, self.n_i, self.chiT_minus33, self.m_B)
  
 
+    @staticmethod
+    @nb.jit(cache=True)
+    def _phi_f(z, r, n_i, chiT_minus33, m_B):
+        return 1 / m_B ** 2 * (16 * n_i / 3 / np.pi / chiT_minus33) ** 0.5 \
+                * r * (1 + z) * (1 - z) ** (3. / 2) / ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** 4
+
+
+    @functools.lru_cache()
     def phi_F1(self, z):
-        r = self.r
-        return 1 / self.m_B ** 3 * (8 * self.n_i / 3 / np.pi / self.chiT_minus33) ** 0.5 \
+        return self._phi_F1(z, self.r, self.n_i, self.chiT_minus33, self.m_B)
+
+
+    @staticmethod
+    @nb.jit(cache=True)
+    def _phi_F1(z, r, n_i, chiT_minus33, m_B):
+        return 1 / m_B ** 3 * (8 * n_i / 3 / np.pi / chiT_minus33) ** 0.5 \
                * r * (1 + z) * (1 - z) ** (5. / 2) / ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** 5
 
 
