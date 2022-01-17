@@ -219,6 +219,14 @@ class BToDStarBGL(FormFactorBToC):
         self.expansion_coefficients_b = [*exp_coeff_b]
         self.expansion_coefficients_c = [((self.m_B - self.m_M) * self.phi_F1(0) / self.phi_f(0)) * exp_coeff_b[0], *exp_coeff_c]
 
+    def get_expansion_coefficients_a(self) -> list:
+        return self.expansion_coefficients_a
+
+    def get_expansion_coefficients_b(self) -> list:
+        return self.expansion_coefficients_b
+
+    def get_expansion_coefficients_c(self) -> list:
+        return self.expansion_coefficients_c
 
     def h_A1(self, w):
         z = self.z(w)
