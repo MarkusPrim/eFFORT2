@@ -425,30 +425,7 @@ class BLPRXP:
         self.eb2 = self.eb**2
         self.ec2 = self.ec**2
         self.eceb = self.ec * self.eb
-        
-
-    # --------------------------------------------------------------------------------------------        
-    def Gamma(self,dG):
-        return 0      
-        
-    # ------------------------------------------------------------------------------------------------        
-    def dGamma(self,Hp,Hm,H0,HS,ml,p,q2):
-        self.GF = 1.16637*10**(-5)
-        rate = self.Vcb**2*self.GF**2/(96*np.pi**3 *self.mB**2)*(1 - ml**2/q2)**2 * p * q2 * ( (Hp**2 + Hm**2 + H0**2)*( 1 + ml**2/(2*q2) ) +  3*ml**2/(2*q2)*HS**2)
-        return rate
     
-    def dGammaD(self,w,ml=0):
-        q2 = self.q2D(w)
-        pD = self.pD(q2)
-        return 2*self.mB*self.mDs * self.dGamma(0,0,self.H0D(w),self.HsD(w),ml,pD,q2)
-        
-    def dGammaDs(self,w,ml=0):
-        q2 = self.q2Ds(w)
-        pDs = self.pDs(q2)
-        return 2*self.mB*self.mDs * self.dGamma(self.HpDs(w),self.HmDs(w),self.H0Ds(w),self.HsDs(w),ml,pDs,q2)
-    
-        
-    # ------------------------------------------------------------------------------------------------        
 
     def pD(self,q2):
         return np.sqrt( ( (self.mB**2 + self.mD**2 - q2)/(2*self.mB) )**2 - self.mD**2 )
@@ -467,74 +444,6 @@ class BLPRXP:
     
     def wDs(self,q2):
         return (self.mB**2 + self.mDs**2 - q2)/(2*self.mB*self.mDs)
-    
-    # ------------------------------------------------------------------------------------------------        
-    # D Helicity Amplitudes
-    
-    def H0D(self,w):
-        return np.sqrt(self.mB*self.mD)*(self.mB+self.mD)/np.sqrt(self.q2D(w))*np.sqrt(w**2-1.)*self.V1D(w)
-
-    def HsD(self,w):
-        return np.sqrt(self.mB*self.mD)*(self.mB-self.mD)/np.sqrt(self.q2D(w))*(w+1)*self.S1D(w)
-    
-    # ------------------------------------------------------------------------------------------------        
-    # D* Helicity Amplitudes
-    
-    def HpDs(self,w):
-        return (self.mB+self.mDs)*self.A1Ds(w) - 2*self.mB/(self.mB+self.mDs)*self.pDs(self.q2Ds(w))*self.VDs(w)
-        
-    def HmDs(self,w):   
-        return (self.mB+self.mDs)*self.A1Ds(w) + 2*self.mB/(self.mB+self.mDs)*self.pDs(self.q2Ds(w))*self.VDs(w)
-    
-    def H0Ds(self,w):
-        return 1./(2*self.mDs*np.sqrt(self.q2Ds(w))) * ( (self.mB**2 - self.mDs**2 - self.q2Ds(w))*(self.mB + self.mDs)*self.A1Ds(w) - (4*self.mB**2 * self.pDs(self.q2Ds(w))**2)/(self.mB + self.mDs)*self.A2Ds(w) )
-
-    def HsDs(self,w):
-        return (2*self.mB*self.pDs(self.q2Ds(w)))/np.sqrt(self.q2Ds(w)) * self.A0Ds(w)
-    
-    # ------------------------------------------------------------------------------------------------        
-    # D form factors
-    
-    def V1D(self,w):
-        return self.hp(w) - (self.mB - self.mD)/(self.mB + self.mD) * self.hm(w)
-
-    def S1D(self,w):
-        return self.hp(w) - (self.mB + self.mD)/(self.mB - self.mD) * (w-1.)/(w+1.) * self.hm(w)
-       
-    # ------------------------------------------------------------------------------------------------        
-    # D* form factors
-        
-    def A1Ds(self,w):
-        return (w+1.)/2. * self.fDs * self.hA1(w)
-
-    def A2Ds(self,w):
-        return self.R2(w)/self.fDs * self.hA1(w)
-
-    def A0Ds(self,w):
-        return self.R0(w)/self.fDs * self.hA1(w)
-    
-    def VDs(self,w):
-        return self.R1(w)/self.fDs * self.hA1(w)   
-
-    def R0(self,w):
-        return self.A0(w) * self.fDs / self.hA1(w)    
-
-    def R1(self,w):
-        return self.hV(w) / self.hA1(w)
-    
-    def R2(self,w):
-        return ( self.hA3(w) + self.mDs/self.mB * self.hA2(w) ) / self.hA1(w)
-        
-    def R3(self,w):
-        return (self.hA3(w) - self.mDs/self.mB * self.hA2(w)) / self.hA1(w)
-
-    def A0(self,w):
-        return self.A3(w) + self.q2Ds(w)/(4*self.mB*self.mDs)*np.sqrt(self.mB/self.mDs) * ( self.hA3(w) - self.mDs/self.mB * self.hA2(w) )
-    
-    def A3(self,w):
-        return (self.mB + self.mDs)/(2*np.sqrt(self.mB*self.mDs)) *( self.mB/(self.mB + self.mDs) *(w+1) * self.hA1(w) - (self.mB - self.mDs)/(2*self.mDs) * ( self.hA3(w) + self.mDs/self.mB * self.hA2(w) ) )
-    
-    # ------------------------------------------------------------------------------------------------        
 
     def PrintAllPars(self):
         
@@ -800,7 +709,6 @@ class BLPRXP:
 
     def L6c(self,w):
         return self.L6_1(w) + self.ec*self.L6_2(w)        
-    
         
 
     # ------------------------------------------------------------------------------------------------    
@@ -957,3 +865,92 @@ class BLPRXP:
         value += asec * (cmagc*(-self.L3_1(w) + self.L2_1(w)) + (self.L2_1(w) - self.L3_1(w) - self.L5_1(w) + self.L6_1(w))*self.CA1(w) + ((self.L4_1(w) - 3*self.L5_1(w))*w*self.CA3(w))/(1 + w) + (self.L2_1(w) + self.L5_1(w) + self.L3_1(w)*(-1 + w) - self.L6_1(w)*(1 + w))*self.CA3(w) + 2*(-1 + w)*(self.derCA1(w) + self.derCA3(w)))
         
         return value     
+
+
+class BToDBLPRXP(BLPRXP):
+
+    def _dGamma(self,Hp,Hm,H0,HS,ml,p,q2):
+        self.GF = 1.16637*10**(-5)
+        rate = self.Vcb**2*self.GF**2/(96*np.pi**3 *self.mB**2)*(1 - ml**2/q2)**2 * p * q2 * ( (Hp**2 + Hm**2 + H0**2)*( 1 + ml**2/(2*q2) ) +  3*ml**2/(2*q2)*HS**2)
+        return rate
+    
+    def dGamma(self,w,ml=0):
+        q2 = self.q2D(w)
+        pD = self.pD(q2)
+        return 2*self.mB*self.mDs * self._dGamma(0,0,self.Hzero(w),self.Hscalar(w),ml,pD,q2)
+
+    
+    def Hzero(self,w):
+        return np.sqrt(self.mB*self.mD)*(self.mB+self.mD)/np.sqrt(self.q2D(w))*np.sqrt(w**2-1.)*self.V1(w)
+
+    def Hscalar(self,w):
+        return np.sqrt(self.mB*self.mD)*(self.mB-self.mD)/np.sqrt(self.q2D(w))*(w+1)*self.S1(w)
+    
+
+    
+    def V1(self,w):
+        return self.hp(w) - (self.mB - self.mD)/(self.mB + self.mD) * self.hm(w)
+
+    def S1(self,w):
+        return self.hp(w) - (self.mB + self.mD)/(self.mB - self.mD) * (w-1.)/(w+1.) * self.hm(w)
+       
+    
+
+
+class BToDStarBLPRXP(BLPRXP):
+
+
+    def _dGamma(self,Hp,Hm,H0,HS,ml,p,q2):
+        self.GF = 1.16637*10**(-5)
+        rate = self.Vcb**2*self.GF**2/(96*np.pi**3 *self.mB**2)*(1 - ml**2/q2)**2 * p * q2 * ( (Hp**2 + Hm**2 + H0**2)*( 1 + ml**2/(2*q2) ) +  3*ml**2/(2*q2)*HS**2)
+        return rate
+        
+    def dGamma(self,w,ml=0):
+        q2 = self.q2Ds(w)
+        pDs = self.pDs(q2)
+        return 2*self.mB*self.mDs * self._dGamma(self.Hplus(w),self.Hminus(w),self.Herzo(w),self.Hscalar(w),ml,pDs,q2)
+
+
+    def Hplus(self,w):
+        return (self.mB+self.mDs)*self.A1(w) - 2*self.mB/(self.mB+self.mDs)*self.pDs(self.q2Ds(w))*self.V(w)
+        
+    def Hminus(self,w):   
+        return (self.mB+self.mDs)*self.A1(w) + 2*self.mB/(self.mB+self.mDs)*self.pDs(self.q2Ds(w))*self.V(w)
+    
+    def Herzo(self,w):
+        return 1./(2*self.mDs*np.sqrt(self.q2Ds(w))) * ( (self.mB**2 - self.mDs**2 - self.q2Ds(w))*(self.mB + self.mDs)*self.A1(w) - (4*self.mB**2 * self.pDs(self.q2Ds(w))**2)/(self.mB + self.mDs)*self.A2(w) )
+
+    def Hscalar(self,w):
+        return (2*self.mB*self.pDs(self.q2Ds(w)))/np.sqrt(self.q2Ds(w)) * self.A0(w)
+
+
+    def A1(self,w):  # Can be inherited
+        return (w+1.)/2. * self.fDs * self.hA1(w)
+
+    def A2(self,w):  # Can be inherited
+        return self.R2(w)/self.fDs * self.hA1(w)
+
+    def A0(self,w):  # Can be inherited
+        return self.R0(w)/self.fDs * self.hA1(w)
+    
+    def V(self,w):  # Can be inherited
+        return self.R1(w)/self.fDs * self.hA1(w)   
+
+    def R0(self,w):
+        return self.A0(w) * self.fDs / self.hA1(w)    
+
+    def R1(self,w):
+        return self.hV(w) / self.hA1(w)
+    
+    def R2(self,w):
+        return ( self.hA3(w) + self.mDs/self.mB * self.hA2(w) ) / self.hA1(w)
+        
+    def R3(self,w):
+        return (self.hA3(w) - self.mDs/self.mB * self.hA2(w)) / self.hA1(w)
+
+    def A0(self,w):
+        return self.A3(w) + self.q2Ds(w)/(4*self.mB*self.mDs)*np.sqrt(self.mB/self.mDs) * ( self.hA3(w) - self.mDs/self.mB * self.hA2(w) )
+    
+    def A3(self,w):
+        return (self.mB + self.mDs)/(2*np.sqrt(self.mB*self.mDs)) *( self.mB/(self.mB + self.mDs) *(w+1) * self.hA1(w) - (self.mB - self.mDs)/(2*self.mDs) * ( self.hA3(w) + self.mDs/self.mB * self.hA2(w) ) )
+    
