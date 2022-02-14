@@ -3,7 +3,9 @@ import numpy as np
 import numba as nb
 import functools
 import uncertainties.unumpy as unp
+import scipy.misc
 
+from effort2.math.functions import diLog
 from effort2.formfactors.formFactorBase import FormFactor
 
 
@@ -220,14 +222,6 @@ class BToDStarBGL(FormFactorBToC):
         self.expansion_coefficients_b = [*exp_coeff_b]
         self.expansion_coefficients_c = [((self.m_B - self.m_M) * self.phi_F1(0) / self.phi_f(0)) * exp_coeff_b[0], *exp_coeff_c]
 
-    def get_expansion_coefficients_a(self) -> list:
-        return self.expansion_coefficients_a
-
-    def get_expansion_coefficients_b(self) -> list:
-        return self.expansion_coefficients_b
-
-    def get_expansion_coefficients_c(self) -> list:
-        return self.expansion_coefficients_c
 
     def h_A1(self, w):
         z = self.z(w)
@@ -338,97 +332,69 @@ class BToDStarBGL(FormFactorBToC):
         return 1 / (p(z) * phi(z)) * sum([a_i * z ** n for n, a_i in enumerate(a)])
 
 
-class DiLog:
-    
-    def DiLogFunc(self, t):
-        return unp.log(1-t)/t
-        
-    def DiLog(self, z):
-        
-        xmin = 0
-        xmax = z
-            
-        value = 0
-    
-        xi = np.array([0,0.16035862813102394,-0.16035862813102394,0.3165642266117781,-0.3165642266117781,0.46457038687717755,-0.46457038687717755,0.6005459122435153,-0.6005459122435153,0.7209655043062628,-0.7209655043062628,0.8227150489105877,-0.8227150489105877,0.9031559802279142,-0.9031559802279142,0.9602078316107117,-0.9602078316107117,0.9924070086164836,-0.9924070086164836])
-        wi = np.array([0.16105444984878362,0.15896882598519965,0.15896882598519965,0.1527663007284602,0.1527663007284602,0.1426055640976579,0.1426055640976579,0.1287567549009922,0.1287567549009922,0.11156236184219351,0.11156236184219351,0.09149349482553046,0.09149349482553046,0.06904552773838758,0.06904552773838758,0.044807508218039215,0.044807508218039215,0.019469784466159833,0.019469784466159833])
-         
-        m = 0
-        for m in range(len(xi)):
-            yi = (xmax-xmin)*xi[m]/2 + (xmax+xmin)/2 + 0.0000001
-            value += wi[m]*self.DiLogFunc(yi)
-        
-        value *= (xmax-xmin)/2
-    
-        return -value  
-    
-    def Spence(self, z):
-        return -self.DiLog(1-z)
-
-
-
 class BLPRXP:
 
-    # ------------------------------------------------------------------------------------------------
-    
-    def __init__(self, pars = np.array([]), ml = 0):
+    def __init__(
+        self,
+        mB: float = 5.28,
+        mD: float = 1.87,
+        mDs: float = 2.01,
+        mBBar: float = 5.313,
+        mDBar: float = 1.973,
+        ml: float = 0,
+        alpha_s: float = 0.27,
+        Vcb: float = 1,
+        RhoSq: float = 1.2,
+        Cur: float = 80,
+        chi21: float = 0,
+        chi2p: float = 0,
+        chi3p: float = 0,
+        eta1: float = 0,
+        etap: float = 0,
+        mb1S: float = 4.71,
+        dmbc: float = 3.4,
+        beta21: float = 0,
+        beta3p: float = 0,
+        phi1p: float = 0,
+        la2: float = 0,
+        ):
 
-        # --------------------------------------------------------------------------------------------        
-        # Set some global variables
-        
-        self.als = 0.27
-        self.ash =  self.als/np.pi
-        
+        self.als = alpha_s
+        self.ash =  self.als/np.pi        
         self.ml = ml
         
         # Epsilon for numerical derivative
         self.eps = 10**-6
         
-        #self.m_B = 5.279
-        #self.m_D = 1.879
-        self.m_B = 5.28
-        self.m_D = 1.87        
-        self.r_D = self.m_D/self.m_B
+        self.mB = mB
+        self.mD = mD
+        self.mDs = mDs
+        self.rD = mD / mB
+        self.fDs = 2 * np.sqrt(mB * mDs) / (mB + mDs)
         
-        self.m_BBar = 5.313
-        self.m_DBar = 1.973        
+        self.mBBar = mBBar
+        self.mDBar = mDBar
         
         # Fit Parameters
-        self.pars = {}
-        self.Vcb = 0.
-        self.RhoSq = 1.2
-        self.Cur = 80.
-        self.chi21 = 0.
-        self.chi2p = 0.
-        self.chi3p = 0.
-        self.eta1 = 0.
-        self.etap = 0.
-        self.mb1S = 4.71
-        self.dmbc = 3.4
-        self.beta21 = 0.
-        self.beta3p = 0.
-        self.phi1p = 0.
-        self.la2 = 0.  
-        self.mb = 0
-        
-        # Dilogarithm calculation
-        self.dl = DiLog()                
- 
+        self.Vcb = Vcb
+        self.RhoSq = RhoSq
+        self.Cur = Cur
+        self.chi21 = chi21
+        self.chi2p = chi2p
+        self.chi3p = chi3p
+        self.eta1 = eta1
+        self.etap = etap
+        self.mb1S = mb1S
+        self.dmbc = dmbc
+        self.beta21 = beta21
+        self.beta3p = beta3p
+        self.phi1p = phi1p
+        self.la2 = la2
+
         # Now let's calculate some of the variables we need, note that these are just placeholders
         # for what we will have to initialize with the uncertainty class
         
-        self.SetAuxPars()              
-        
-        # --------------------------------------------------------------------------------------------        
-        
-    # ------------------------------------------------------------------------------------------------        
-
-    
-    
-    # ------------------------------------------------------------------------------------------------        
-    
-    # Calculate additional parameters
-    def SetAuxPars(self):
+        # Calculate additional parameters
         
         # Quark masses
         corr1S = 2.*(self.als/3. * 0.85)**2
@@ -437,12 +403,12 @@ class BLPRXP:
         mb_1 = self.mb1S * corr1S
         mc_0 = self.mb1S - self.dmbc
         mc_1 = self.mb1S * corr1S
-        LambdaBar_0 = (mb_0 * self.m_BBar - mc_0 * self.m_DBar)/_dmbc - (2.*mb_0-_dmbc)
-        LambdaBar_1 = (mb_1 * self.m_BBar - mc_1 * self.m_DBar)/_dmbc - 2.*mb_1
-        lambda1_0 = 2.* mb_0 * (mb_0-_dmbc)/_dmbc * (self.m_BBar-self.m_DBar-_dmbc);  
+        LambdaBar_0 = (mb_0 * self.mBBar - mc_0 * self.mDBar)/_dmbc - (2.*mb_0-_dmbc)
+        LambdaBar_1 = (mb_1 * self.mBBar - mc_1 * self.mDBar)/_dmbc - 2.*mb_1
+        lambda1_0 = 2.* mb_0 * (mb_0-_dmbc)/_dmbc * (self.mBBar-self.mDBar-_dmbc)  
         
-        self.La1S = LambdaBar_0
-        self.mc1S = mc_0
+        #self.La1S = LambdaBar_0
+        #self.mc1S = mc_0
                 
         self.eb = LambdaBar_0/(2*mb_0)
         self.ec = LambdaBar_0/(2*mc_0)
@@ -461,6 +427,115 @@ class BLPRXP:
         self.eceb = self.ec * self.eb
         
 
+    # --------------------------------------------------------------------------------------------        
+    def Gamma(self,dG):
+        return 0      
+        
+    # ------------------------------------------------------------------------------------------------        
+    def dGamma(self,Hp,Hm,H0,HS,ml,p,q2):
+        self.GF = 1.16637*10**(-5)
+        rate = self.Vcb**2*self.GF**2/(96*np.pi**3 *self.mB**2)*(1 - ml**2/q2)**2 * p * q2 * ( (Hp**2 + Hm**2 + H0**2)*( 1 + ml**2/(2*q2) ) +  3*ml**2/(2*q2)*HS**2)
+        return rate
+    
+    def dGammaD(self,w,ml=0):
+        q2 = self.q2D(w)
+        pD = self.pD(q2)
+        return 2*self.mB*self.mDs * self.dGamma(0,0,self.H0D(w),self.HsD(w),ml,pD,q2)
+        
+    def dGammaDs(self,w,ml=0):
+        q2 = self.q2Ds(w)
+        pDs = self.pDs(q2)
+        return 2*self.mB*self.mDs * self.dGamma(self.HpDs(w),self.HmDs(w),self.H0Ds(w),self.HsDs(w),ml,pDs,q2)
+    
+        
+    # ------------------------------------------------------------------------------------------------        
+
+    def pD(self,q2):
+        return np.sqrt( ( (self.mB**2 + self.mD**2 - q2)/(2*self.mB) )**2 - self.mD**2 )
+        
+    def pDs(self,q2):
+        return np.sqrt( ( (self.mB**2 + self.mDs**2 - q2)/(2*self.mB) )**2 - self.mDs**2 )
+        
+    def q2D(self,w):
+        return -(2 * self.mB * self.mD * w - self.mB**2 - self.mD**2)
+    
+    def q2Ds(self,w):
+        return -(2 * self.mB * self.mDs * w - self.mB**2 - self.mDs**2)
+    
+    def wD(self,q2):
+        return (self.mB**2 + self.mD**2 - q2)/(2*self.mB*self.mD)
+    
+    def wDs(self,q2):
+        return (self.mB**2 + self.mDs**2 - q2)/(2*self.mB*self.mDs)
+    
+    # ------------------------------------------------------------------------------------------------        
+    # D Helicity Amplitudes
+    
+    def H0D(self,w):
+        return np.sqrt(self.mB*self.mD)*(self.mB+self.mD)/np.sqrt(self.q2D(w))*np.sqrt(w**2-1.)*self.V1D(w)
+
+    def HsD(self,w):
+        return np.sqrt(self.mB*self.mD)*(self.mB-self.mD)/np.sqrt(self.q2D(w))*(w+1)*self.S1D(w)
+    
+    # ------------------------------------------------------------------------------------------------        
+    # D* Helicity Amplitudes
+    
+    def HpDs(self,w):
+        return (self.mB+self.mDs)*self.A1Ds(w) - 2*self.mB/(self.mB+self.mDs)*self.pDs(self.q2Ds(w))*self.VDs(w)
+        
+    def HmDs(self,w):   
+        return (self.mB+self.mDs)*self.A1Ds(w) + 2*self.mB/(self.mB+self.mDs)*self.pDs(self.q2Ds(w))*self.VDs(w)
+    
+    def H0Ds(self,w):
+        return 1./(2*self.mDs*np.sqrt(self.q2Ds(w))) * ( (self.mB**2 - self.mDs**2 - self.q2Ds(w))*(self.mB + self.mDs)*self.A1Ds(w) - (4*self.mB**2 * self.pDs(self.q2Ds(w))**2)/(self.mB + self.mDs)*self.A2Ds(w) )
+
+    def HsDs(self,w):
+        return (2*self.mB*self.pDs(self.q2Ds(w)))/np.sqrt(self.q2Ds(w)) * self.A0Ds(w)
+    
+    # ------------------------------------------------------------------------------------------------        
+    # D form factors
+    
+    def V1D(self,w):
+        return self.hp(w) - (self.mB - self.mD)/(self.mB + self.mD) * self.hm(w)
+
+    def S1D(self,w):
+        return self.hp(w) - (self.mB + self.mD)/(self.mB - self.mD) * (w-1.)/(w+1.) * self.hm(w)
+       
+    # ------------------------------------------------------------------------------------------------        
+    # D* form factors
+        
+    def A1Ds(self,w):
+        return (w+1.)/2. * self.fDs * self.hA1(w)
+
+    def A2Ds(self,w):
+        return self.R2(w)/self.fDs * self.hA1(w)
+
+    def A0Ds(self,w):
+        return self.R0(w)/self.fDs * self.hA1(w)
+    
+    def VDs(self,w):
+        return self.R1(w)/self.fDs * self.hA1(w)   
+
+    def R0(self,w):
+        return self.A0(w) * self.fDs / self.hA1(w)    
+
+    def R1(self,w):
+        return self.hV(w) / self.hA1(w)
+    
+    def R2(self,w):
+        return ( self.hA3(w) + self.mDs/self.mB * self.hA2(w) ) / self.hA1(w)
+        
+    def R3(self,w):
+        return (self.hA3(w) - self.mDs/self.mB * self.hA2(w)) / self.hA1(w)
+
+    def A0(self,w):
+        return self.A3(w) + self.q2Ds(w)/(4*self.mB*self.mDs)*np.sqrt(self.mB/self.mDs) * ( self.hA3(w) - self.mDs/self.mB * self.hA2(w) )
+    
+    def A3(self,w):
+        return (self.mB + self.mDs)/(2*np.sqrt(self.mB*self.mDs)) *( self.mB/(self.mB + self.mDs) *(w+1) * self.hA1(w) - (self.mB - self.mDs)/(2*self.mDs) * ( self.hA3(w) + self.mDs/self.mB * self.hA2(w) ) )
+    
+    # ------------------------------------------------------------------------------------------------        
+
     def PrintAllPars(self):
         
         print("Vcb: ", self.Vcb)
@@ -477,32 +552,25 @@ class BLPRXP:
         print("beta3p: ", self.beta3p)
         print("phi1p: ", self.phi1p)
         print("la2: ", self.la2)
-        print("mb:", self.mb)
-        print("mc:", self.pars["mc"])
-        print("mc1S:", self.mc1S)
-        print("La1S:", self.La1S)
-        print("La:", self.pars["La"])
         print("z:", self.z)
         print("eb:", self.eb)
         print("ec:", self.ec)
-        print("ebas:", self.pars["ebas"])
-        print("ecas:", self.pars["ecas"])
     
     # Kinematics
     def wmin(self):
         return 1.0
     
     def wmaxD(self,ml=0):
-        return (self.m_B**2 + self.m_D**2 - ml**2)/(2*self.m_B*self.m_D)
+        return (self.mB**2 + self.mD**2 - ml**2)/(2*self.mB*self.mD)
     
     def wmaxDs(self,ml=0):
-        return (self.m_B**2 + self.m_Ds**2 - ml**2)/(2*self.m_B*self.m_Ds)    
+        return (self.mB**2 + self.mDs**2 - ml**2)/(2*self.mB*self.mDs)    
         
     # Leading IW Function 
     def xi(self,w):
     
         # optimized expansion
-        a = ( (1 + self.r_D)/(2*np.sqrt(self.r_D)) )**0.5
+        a = ( (1 + self.rD)/(2*np.sqrt(self.rD)) )**0.5
         zs = ( (w+1)**0.5 - (2)**0.5*a )/( (w+1)**0.5 + (2)**0.5*a )
         zsn = ( 1 - a )/( 1 + a )
 
@@ -560,7 +628,7 @@ class BLPRXP:
         return self.ec2 * self.L4_2(w) + self.eb2 * self.L4_2(w)
      
     def hVh_2(self,w):
-        return self.ec2 * (self.L2_2(w) - self.L5_2(w)) + self.eb2 * (self.L2_2(w) - self.L5_2(w)) + self.eceb * self.M9(w);
+        return self.ec2 * (self.L2_2(w) - self.L5_2(w)) + self.eb2 * (self.L2_2(w) - self.L5_2(w)) + self.eceb * self.M9(w)
     
     def hA1h_2(self,w):
         wm1Owp1 = (w - 1.)/(w + 1.)
@@ -603,13 +671,12 @@ class BLPRXP:
         z = self.z    
         wSq = w**2
         zSq = z**2
-        sqrt1wSq = np.sqrt(wSq - 1);
-        zXX = (1 - 2*w*z + zSq)**2;
-        lnz = unp.log(z);
-        polylog1 = self.dl.DiLog((2 + 2*w*(-w + sqrt1wSq)))
-        polylog2 = self.dl.DiLog((2 - 2*w*(w + sqrt1wSq)))
-        polylog3 = self.dl.DiLog((1 - w*z + sqrt1wSq*z))
-        polylog4 = self.dl.DiLog((1 - (w + sqrt1wSq)*z))
+        sqrt1wSq = np.sqrt(wSq - 1)
+        lnz = unp.log(z)
+        polylog1 = diLog((2 + 2*w*(-w + sqrt1wSq)))
+        polylog2 = diLog((2 - 2*w*(w + sqrt1wSq)))
+        polylog3 = diLog((1 - w*z + sqrt1wSq*z))
+        polylog4 = diLog((1 - (w + sqrt1wSq)*z))
         
         return (-2*np.log(w + sqrt1wSq)*(-((1 + w)*(-1 + (-1 + 3*w - z)*z)) + w*(-1 + 2*w*z - zSq)*lnz) + sqrt1wSq*(4 + 4*z*(-2*w + z) - (-1 + zSq)*lnz) +w*(-1 + 2*w*z - zSq)*(-polylog1 + polylog2 + 2*polylog3 - 2*polylog4))/(3.*sqrt1wSq*(-1 + 2*w*z - zSq))       
 
@@ -618,17 +685,9 @@ class BLPRXP:
         z = self.z        
         wSq = w**2
         zSq = z**2
-        sqrt1wSq = np.sqrt(wSq - 1);
-        zXX = (1 - 2*w*z + zSq)**2;
-        lnz = unp.log(z);
-        polylog1 = self.dl.DiLog((2 + 2*w*(-w + sqrt1wSq)))
-        polylog2 = self.dl.DiLog((2 - 2*w*(w + sqrt1wSq)))
-        polylog3 = self.dl.DiLog((1 - w*z + sqrt1wSq*z))
-        polylog4 = self.dl.DiLog((1 - (w + sqrt1wSq)*z))
-        #polylog1 = spence(1 - (2 + 2*w*(-w + sqrt1wSq)))
-        #polylog2 = spence(1 - (2 - 2*w*(w + sqrt1wSq)))
-        #polylog3 = spence(1 - (1 - w*z + sqrt1wSq*z))
-        #polylog4 = spence(1 - (1 - (w + sqrt1wSq)*z))    
+        sqrt1wSq = np.sqrt(wSq - 1)
+        zXX = (1 - 2*w*z + zSq)**2
+        lnz = unp.log(z)
         
         return (-2*((2 - z*(-1 + wSq*(2 - 4*z) + zSq + w*(5 + (-2 + z)*z)))*np.log(w + sqrt1wSq) + sqrt1wSq*((-1 + z)*(1 - 2*w*z + zSq) +z*(3 + z*(2 + z) - 2*w*(1 + 2*z))*lnz)))/(3.*sqrt1wSq*zXX)       
            
@@ -637,17 +696,9 @@ class BLPRXP:
         z = self.z
         wSq = w**2
         zSq = z**2
-        sqrt1wSq = np.sqrt(wSq - 1);
-        zXX = (1 - 2*w*z + zSq)**2;
-        lnz = unp.log(z);
-        polylog1 = self.dl.DiLog((2 + 2*w*(-w + sqrt1wSq)))
-        polylog2 = self.dl.DiLog((2 - 2*w*(w + sqrt1wSq)))
-        polylog3 = self.dl.DiLog((1 - w*z + sqrt1wSq*z))
-        polylog4 = self.dl.DiLog((1 - (w + sqrt1wSq)*z))
-        #polylog1 = spence(1 - (2 + 2*w*(-w + sqrt1wSq)))
-        #polylog2 = spence(1 - (2 - 2*w*(w + sqrt1wSq)))
-        #polylog3 = spence(1 - (1 - w*z + sqrt1wSq*z))
-        #polylog4 = spence(1 - (1 - (w + sqrt1wSq)*z))          
+        sqrt1wSq = np.sqrt(wSq - 1)
+        zXX = (1 - 2*w*z + zSq)**2
+        lnz = unp.log(z)   
         
         return (2*z*((1 + w - 2*w*(1 + 2*w)*z + (-1 + w*(5 + 2*w))*zSq - 2*pow(z,3.))*np.log(w + sqrt1wSq) + sqrt1wSq*((-1 + z)*(1 - 2*w*z + zSq) +(1 + z*(2 + 3*z - 2*w*(2 + z)))*lnz)))/(3.*sqrt1wSq*zXX)
         
@@ -657,17 +708,12 @@ class BLPRXP:
         z = self.z
         wSq = w**2
         zSq = z**2
-        sqrt1wSq = np.sqrt(wSq - 1);
-        zXX = (1 - 2*w*z + zSq)**2;
-        lnz = unp.log(z);
-        polylog1 = self.dl.DiLog((2 + 2*w*(-w + sqrt1wSq)))
-        polylog2 = self.dl.DiLog((2 - 2*w*(w + sqrt1wSq)))
-        polylog3 = self.dl.DiLog((1 - w*z + sqrt1wSq*z))
-        polylog4 = self.dl.DiLog((1 - (w + sqrt1wSq)*z))
-        #polylog1 = spence(1 - (2 + 2*w*(-w + sqrt1wSq)))
-        #polylog2 = spence(1 - (2 - 2*w*(w + sqrt1wSq)))
-        #polylog3 = spence(1 - (1 - w*z + sqrt1wSq*z))
-        #polylog4 = spence(1 - (1 - (w + sqrt1wSq)*z))    
+        sqrt1wSq = np.sqrt(wSq - 1)
+        lnz = unp.log(z)
+        polylog1 = diLog((2 + 2*w*(-w + sqrt1wSq)))
+        polylog2 = diLog((2 - 2*w*(w + sqrt1wSq)))
+        polylog3 = diLog((1 - w*z + sqrt1wSq*z))
+        polylog4 = diLog((1 - (w + sqrt1wSq)*z))
         
         return (-2*np.log(w + sqrt1wSq)*(-((-1 + w)*(-1 + z + 3*w*z - zSq)) + w*(-1 + 2*w*z - zSq)*lnz) + sqrt1wSq*(4 + 4*z*(-2*w + z) - (-1 + zSq)*lnz) - w*(-1 + 2*w*z - zSq)*(polylog1 - polylog2 - 2*polylog3 + 2*polylog4))/(3.*sqrt1wSq*(-1 + 2*w*z - zSq))       
         
@@ -677,17 +723,9 @@ class BLPRXP:
         z = self.z
         wSq = w**2
         zSq = z**2
-        sqrt1wSq = np.sqrt(wSq - 1);
-        zXX = (1 - 2*w*z + zSq)**2;
-        lnz = unp.log(z);
-        polylog1 = self.dl.DiLog((2 + 2*w*(-w + sqrt1wSq)))
-        polylog2 = self.dl.DiLog((2 - 2*w*(w + sqrt1wSq)))
-        polylog3 = self.dl.DiLog((1 - w*z + sqrt1wSq*z))
-        polylog4 = self.dl.DiLog((1 - (w + sqrt1wSq)*z))
-        #polylog1 = spence(1 - (2 + 2*w*(-w + sqrt1wSq)))
-        #polylog2 = spence(1 - (2 - 2*w*(w + sqrt1wSq)))
-        #polylog3 = spence(1 - (1 - w*z + sqrt1wSq*z))
-        #polylog4 = spence(1 - (1 - (w + sqrt1wSq)*z))         
+        sqrt1wSq = np.sqrt(wSq - 1)
+        zXX = (1 - 2*w*z + zSq)**2
+        lnz = unp.log(z)   
 
         return (-2*((2 + z*(-1 + zSq + wSq*(2 + 4*z) - w*(5 + z*(2 + z))))* np.log(w + sqrt1wSq) + sqrt1wSq*((1 + z)*(1 - 2*w*z + zSq) +z*(3 + w*(2 - 4*z) + (-2 + z)*z)*lnz)))/(3.*sqrt1wSq*zXX)        
         
@@ -696,17 +734,9 @@ class BLPRXP:
         z = self.z
         wSq = w**2
         zSq = z**2
-        sqrt1wSq = np.sqrt(wSq - 1);
-        zXX = (1 - 2*w*z + zSq)**2;
-        lnz = unp.log(z);
-        polylog1 = self.dl.DiLog((2 + 2*w*(-w + sqrt1wSq)))
-        polylog2 = self.dl.DiLog((2 - 2*w*(w + sqrt1wSq)))
-        polylog3 = self.dl.DiLog((1 - w*z + sqrt1wSq*z))
-        polylog4 = self.dl.DiLog((1 - (w + sqrt1wSq)*z))
-        #polylog1 = spence(1 - (2 + 2*w*(-w + sqrt1wSq)))
-        #polylog2 = spence(1 - (2 - 2*w*(w + sqrt1wSq)))
-        #polylog3 = spence(1 - (1 - w*z + sqrt1wSq*z))
-        #polylog4 = spence(1 - (1 - (w + sqrt1wSq)*z))            
+        sqrt1wSq = np.sqrt(wSq - 1)
+        zXX = (1 - 2*w*z + zSq)**2
+        lnz = unp.log(z)
 
         return (2*z*((1 + 2*wSq*z*(2 + z) + zSq*(-1 + 2*z) - w*(1 + z*(2 + 5*z)))*np.log(w + sqrt1wSq) + sqrt1wSq*((1 + z)*(1 - 2*w*z + zSq) +(-1 + z*(2 + 4*w - 3*z - 2*w*z))*lnz)))/(3.*sqrt1wSq*zXX)
     
@@ -714,22 +744,22 @@ class BLPRXP:
     # Derivatives of as functions
 
     def derCA1(self,w):
-        return ( self.CA1(w+self.eps) - self.CA1(w) ) / self.eps
+        return scipy.misc.derivative(self.CA1, w, self.eps)
 
     def derCA2(self,w):
-        return ( self.CA2(w+self.eps) - self.CA2(w) ) / self.eps
+        return scipy.misc.derivative(self.CA2, w, self.eps)
 
     def derCA3(self,w):
-        return ( self.CA3(w+self.eps) - self.CA3(w) ) / self.eps
+        return scipy.misc.derivative(self.CA3, w, self.eps)
     
     def derCV1(self,w):
-        return ( self.CV1(w+self.eps) - self.CV1(w) ) / self.eps
+        return scipy.misc.derivative(self.CV1, w, self.eps)
 
     def derCV2(self,w):
-        return ( self.CV2(w+self.eps) - self.CV2(w) ) / self.eps
+        return scipy.misc.derivative(self.CV2, w, self.eps)
 
     def derCV3(self,w):
-        return ( self.CV3(w+self.eps) - self.CV3(w) ) / self.eps    
+        return scipy.misc.derivative(self.CV3, w, self.eps)
     
 
     # ------------------------------------------------------------------------------------------------    
@@ -777,22 +807,22 @@ class BLPRXP:
     # L functions for 1/m corrections
     
     def L1_1(self,w):
-        return -4.*(w-1)*(self.chi21 + (w-1.)*self.chi2p)+12.*self.chi3p*(w-1.);
+        return -4.*(w-1)*(self.chi21 + (w-1.)*self.chi2p)+12.*self.chi3p*(w-1.)
         
     def L2_1(self,w):
-        return -4.*self.chi3p*(w-1.);
+        return -4.*self.chi3p*(w-1.)
         
     def L3_1(self,w):
-        return 4.*(self.chi21 + (w-1.)*self.chi2p);
+        return 4.*(self.chi21 + (w-1.)*self.chi2p)
 
     def L4_1(self,w):
-        return 2.*(self.eta1 + self.etap*(w-1.)) - 1;
+        return 2.*(self.eta1 + self.etap*(w-1.)) - 1
         
     def L5_1(self,w):
         return -1.0
     
     def L6_1(self,w):
-        return -2.*(1+(self.eta1 + self.etap*(w-1.)))/(w+1.);
+        return -2.*(1+(self.eta1 + self.etap*(w-1.)))/(w+1.)
        
     # ------------------------------------------------------------------------------------------------
     # L functions for 1/m**2 corrections
@@ -833,8 +863,8 @@ class BLPRXP:
     def eta(self,w):
         return self.eta1 + self.etap*(w-1)
 
-    def phi1p(self,w):
-        return self.phi1p
+    #def phi1p(self,w):
+        #return self.phi1p
     
     def M8(self,w):
         return (self.la1h+ 6.*self.la2h/(w + 1.) -2. * (w - 1.) * self.phi1(w) - 2. * (2.* self.eta(w) - 1.) * (w - 1.)/(w + 1.))
@@ -843,7 +873,7 @@ class BLPRXP:
         return 3.*self.la2h/(w+1.) + 2. * self.phi1(w) - (2.* self.eta(w) - 1.) * (w - 1.)/(w + 1.)
     
     def M10(self,w):
-        return self.la1h/3. - self.la2h * (w+4.)/(2.*(w+1.)) + 2. * (w + 2.) * self.phi1p(w) - (2.* self.eta(w) - 1.)/(w + 1.)
+        return self.la1h/3. - self.la2h * (w+4.)/(2.*(w+1.)) + 2. * (w + 2.) * self.phi1p - (2.* self.eta(w) - 1.)/(w + 1.)
     
     # ------------------------------------------------------------------------------------------------    
     # as x 1/m corrections to h_{+,-,V,A1-A3} functions 
@@ -871,9 +901,6 @@ class BLPRXP:
         
         aseb = self.ash * self.eb
         asec = self.ash * self.ec
-        
-        cmagb = self.cMagB()
-        cmagc = self.cMagC()        
         
         value = aseb * (-(self.L4_1(w)*self.CV1(w)) - self.L5_1(w)*(1 + w)*self.CV2(w) + ((1 + w)*((self.L1_1(w) - (self.L4_1(w)*(-1 + w))/(1 + w))*(self.CV2(w) - self.CV3(w)) + 2*(-1 + w)*(self.derCV2(w) - self.derCV3(w))))/2.)    
         value += asec * (self.L4_1(w)*self.CV1(w) + self.L5_1(w)*(1 + w)*self.CV3(w) + ((1 + w)*((self.L1_1(w) - (self.L4_1(w)*(-1 + w))/(1 + w))*(self.CV2(w) - self.CV3(w)) + 2*(-1 + w)*(self.derCV2(w) - self.derCV3(w))))/2.)
@@ -911,7 +938,6 @@ class BLPRXP:
         aseb = self.ash * self.eb
         asec = self.ash * self.ec
         
-        cmagb = self.cMagB()
         cmagc = self.cMagC()
         
         value = aseb * ((self.L1_1(w) - self.L4_1(w) - 2*self.L5_1(w))*self.CA2(w) - ((self.L4_1(w) - 3*self.L5_1(w))*self.CA2(w))/(1 + w) + 2*(-1 + w)*self.derCA2(w))
