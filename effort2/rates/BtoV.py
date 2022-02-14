@@ -22,12 +22,12 @@ class BtoV:
             * Add Glebsch Gordan coefficient to differ between B+ and B0 decays.
             * Test the pre integrated rate vs numerical integration of the full rate.
             * Refactor out MC generation into a separate class which gets initialized instead of re-implementing it for every potential rate class.
+            * Implement switch to either use scipy/numpy default or enable some extra features to support propagation of uncertainties for the cost of extra run time.
 
         Nota bene:
             * If you use a form factor parametrization where you can/want to absorb eta_EW and/or Vcb into the definition of the form factor, initialize this class setting both values as 1.
             * The class does not provide marginalizations over w, because this would make the analytical integration dependent on the chosen form factor parametrization. Numerical integration over w is therefore required in many applications.
             * Using the exact boundaries of w on the integration process might cause issues. Try adding/subtracting an epsilon to wmin/wmax to resolve the issue.
-            * It is possible that you are using a different sign convention for the helicity. This corresponds to a transformation cosL -> 1 - cosL.
 
         Args:
             Vcb (float): CKM parameter Vcb.
