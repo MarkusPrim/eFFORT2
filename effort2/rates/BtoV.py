@@ -65,22 +65,6 @@ class BtoV:
         self.rate_max = self.dGamma_dw_dcosL_dcosV_dchi(*self.dGamma_max())  # Add 10% on top just to be sure.
 
 
-    def Hzero(self, w: float):
-        return self.FF.Hzero(w)
-
-
-    def Hplus(self, w: float):
-        return self.FF.Hplus(w)
-
-
-    def Hminus(self, w: float):
-        return self.FF.Hminus(w)
-
-
-    def Hscalar(self, w: float):
-        return self.FF.Hscalar(w)
-
-
     def dGamma_dw_dcosL_dcosV_dchi(
         self, 
         w: float,
@@ -109,12 +93,12 @@ class BtoV:
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
         return f(w) * self.N0 * self.Vcb ** 2 * (
-            (1 + cosL) ** 2 * (1 - cosV ** 2) * self.Hminus(w) ** 2
-            - 2 * (1 - cosL ** 2) * (1 - cosV ** 2) * np.cos(2 * chi) * self.Hminus(w) * self.Hplus(w)
-            + (1 - cosL) ** 2 * (1 - cosV ** 2) * self.Hplus(w) ** 2
-            + 4 * (1 + cosL) * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * self.Hminus(w) * self.Hzero(w)
-            - 4 * (1 - cosL) * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * self.Hplus(w) * self.Hzero(w)
-            + 4 * (1 - cosL ** 2) * cosV ** 2 * self.Hzero(w) ** 2
+            (1 + cosL) ** 2 * (1 - cosV ** 2) * self.FF.Hminus(w) ** 2
+            - 2 * (1 - cosL ** 2) * (1 - cosV ** 2) * np.cos(2 * chi) * self.FF.Hminus(w) * self.FF.Hplus(w)
+            + (1 - cosL) ** 2 * (1 - cosV ** 2) * self.FF.Hplus(w) ** 2
+            + 4 * (1 + cosL) * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * self.FF.Hminus(w) * self.FF.Hzero(w)
+            - 4 * (1 - cosL) * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * self.FF.Hplus(w) * self.FF.Hzero(w)
+            + 4 * (1 - cosL ** 2) * cosV ** 2 * self.FF.Hzero(w) ** 2
         )
 
 
@@ -168,9 +152,9 @@ class BtoV:
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
         output = scipy.integrate.quad(lambda w: 1 / 3. * f(w) * self.N0 * self.Vcb ** 2 * (
-            - ( (chimax - chimin) * (cosLmax + cosLmax ** 2 + cosLmax ** 3 / 3 - 1 / 3. * cosLmin * (3 + cosLmin * (3 + cosLmin))) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * self.Hminus(w) ** 2 )
-            - 1 / 3. * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * self.Hminus(w) * self.Hplus(w)
-            - 1 / 3. * (chimax - chimin) * (cosLmax - cosLmin) * (3 + cosLmax ** 2 + cosLmax * (-3 + cosLmin) + (-3 + cosLmin) * cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * self.Hplus(w) ** 2
+            - ( (chimax - chimin) * (cosLmax + cosLmax ** 2 + cosLmax ** 3 / 3 - 1 / 3. * cosLmin * (3 + cosLmin * (3 + cosLmin))) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * self.FF.Hminus(w) ** 2 )
+            - 1 / 3. * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * self.FF.Hminus(w) * self.FF.Hplus(w)
+            - 1 / 3. * (chimax - chimin) * (cosLmax - cosLmin) * (3 + cosLmax ** 2 + cosLmax * (-3 + cosLmin) + (-3 + cosLmin) * cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * self.FF.Hplus(w) ** 2
             + 2 / 3. * (-(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5) 
                 * (-2 * (1 - cosLmax ** 2) ** 0.5 
                     + 3 * cosLmax * (1 - cosLmax ** 2) ** 0.5
@@ -180,7 +164,7 @@ class BtoV:
                     - 2 * cosLmin ** 2 * (1 - cosLmin ** 2) ** 0.5
                     + 3 * np.arcsin(cosLmax)
                     - 3 * np.arcsin(cosLmin)
-                ) * (np.sin(chimax) - np.sin(chimin)) * self.Hminus(w) * self.Hzero(w)
+                ) * (np.sin(chimax) - np.sin(chimin)) * self.FF.Hminus(w) * self.FF.Hzero(w)
             + 2 / 3. * (-(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5)
                 * (-2 * (1 - cosLmax ** 2) ** 0.5
                     + cosLmax * (-3 + 2 * cosLmax) * (1 - cosLmax ** 2) ** 0.5
@@ -188,8 +172,8 @@ class BtoV:
                     + (3 - 2 * cosLmin) * cosLmin * (1 - cosLmin ** 2) ** 0.5
                     - 3 * np.arcsin(cosLmax)
                     + 3 * np.arcsin(cosLmin)
-                ) * (np.sin(chimax) - np.sin(chimin)) * self.Hplus(w) * self.Hzero(w)
-            - 4 / 3. * (chimax - chimin) * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * self.Hzero(w) ** 2
+                ) * (np.sin(chimax) - np.sin(chimin)) * self.FF.Hplus(w) * self.FF.Hzero(w)
+            - 4 / 3. * (chimax - chimin) * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * self.FF.Hzero(w) ** 2
         ), wmin, wmax, full_output=debug)
 
         if not debug:
@@ -288,7 +272,7 @@ class BtoV:
         """
         assert self.w_min <= w <= self.w_max
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
-        return f(w) / 3 * self.N0 * self.Vcb ** 2 * (64 / 3. * np.pi * self.Hminus(w) ** 2 + 64 / 3. * np.pi * self.Hplus(w) ** 2 + 64 / 3. * np.pi * self.Hzero(w) ** 2)
+        return f(w) / 3 * self.N0 * self.Vcb ** 2 * (64 / 3. * np.pi * self.FF.Hminus(w) ** 2 + 64 / 3. * np.pi * self.FF.Hplus(w) ** 2 + 64 / 3. * np.pi * self.FF.Hzero(w) ** 2)
 
 
     def dGamma_dcosL(self, cosL: float) -> float:
@@ -310,7 +294,7 @@ class BtoV:
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
         return scipy.integrate.quad(
-            lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * self.Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * self.Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * self.Hzero(w) ** 2),
+            lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * self.FF.Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * self.FF.Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * self.FF.Hzero(w) ** 2),
             self.w_min,
             self.w_max
             )[0]
@@ -335,7 +319,7 @@ class BtoV:
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
         return scipy.integrate.quad(
-            lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * self.Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * self.Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * self.Hzero(w) ** 2),
+            lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * self.FF.Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * self.FF.Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * self.FF.Hzero(w) ** 2),
             self.w_min,
             self.w_max
             )[0]
@@ -360,7 +344,7 @@ class BtoV:
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
         return scipy.integrate.quad(
-            lambda w: f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * self.Hminus(w) ** 2 - 32 * np.cos(2 * chi) * self.Hminus(w) * self.Hplus(w) + 32 * self.Hplus(w) ** 2 + 32 * self.Hzero(w) ** 2), 
+            lambda w: f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * self.FF.Hminus(w) ** 2 - 32 * np.cos(2 * chi) * self.FF.Hminus(w) * self.FF.Hplus(w) + 32 * self.FF.Hplus(w) ** 2 + 32 * self.FF.Hzero(w) ** 2), 
             self.w_min, 
             self.w_max
             )[0]
