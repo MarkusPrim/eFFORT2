@@ -6,10 +6,10 @@ import uncertainties.unumpy as unp
 import scipy.misc
 
 from effort2.math.functions import diLog
-from effort2.formfactors.formFactorBase import FormFactor
+from effort2.formfactors.kinematics import Kinematics
 
 
-class FormFactorBToC(FormFactor):
+class FormFactorBToDstar:
     r"""This class defines the interface for any form factor parametrization to be used in conjunction with the rate implementations
 for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands for Pseudoscalar and V stands for Vector heavy mesons.
     """
@@ -27,8 +27,12 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
             m_M (float): Mass of the final state meson.
             m_L (float): Mass of the final state lepton. Defaults to 0 (zero lepton mass approximation).
         """
-        super().__init__(m_B, m_M, m_L)
-        self.rprime = 2 * np.sqrt(self.m_B * self.m_M) / (self.m_B + self.m_M)
+        super().__init__()
+        self.m_B = m_B
+        self.m_M = m_M
+        self.m_L = m_L
+        self.rprime = 2 * np.sqrt(self.m_B * self.m_M) / (self.m_B + self.m_M)  # Equivalent to fDs
+        self.kinematics = Kinematics(m_B, m_M, m_L)
 
 
     def A0(self, w: float) -> float:
@@ -106,7 +110,7 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
         return (term1 - term2) / (term1 + term2)
 
 
-class BToDStarCLN(FormFactorBToC):
+class BToDStarCLN(FormFactorBToDstar):
 
     def __init__(
         self,
@@ -176,7 +180,7 @@ class BToDStarCLN(FormFactorBToC):
         return self.R2_1 + 0.11 * (w - 1) - 0.06 * (w - 1) ** 2
 
 
-class BToDStarBGL(FormFactorBToC):
+class BToDStarBGL(FormFactorBToDstar):
 
     def __init__(
         self, 
@@ -336,12 +340,12 @@ class BLPRXP:
 
     def __init__(
         self,
-        mB: float = 5.28,
-        mD: float = 1.87,
-        mDs: float = 2.01,
+        m_B: float = 5.28,
+        m_D: float = 1.87,
+        m_Ds: float = 2.01,
+        m_L: float = 0,
         mBBar: float = 5.313,
         mDBar: float = 1.973,
-        ml: float = 0,
         alpha_s: float = 0.27,
         Vcb: float = 1,
         RhoSq: float = 1.2,
@@ -360,17 +364,17 @@ class BLPRXP:
         ):
 
         self.als = alpha_s
-        self.ash =  self.als/np.pi        
-        self.ml = ml
+        self.ash =  self.als/np.pi
         
         # Epsilon for numerical derivative
         self.eps = 10**-6
         
-        self.mB = mB
-        self.mD = mD
-        self.mDs = mDs
-        self.rD = mD / mB
-        self.fDs = 2 * np.sqrt(mB * mDs) / (mB + mDs)
+        self.m_B = m_B
+        self.m_D = m_D
+        self.m_Ds = m_Ds
+        self.m_L = m_L
+        self.rD = m_D / m_B
+        self.fDs = 2 * np.sqrt(m_B * m_Ds) / (m_B + m_Ds)  # Equivalent to rprime
         
         self.mBBar = mBBar
         self.mDBar = mDBar
@@ -425,25 +429,7 @@ class BLPRXP:
         self.eb2 = self.eb**2
         self.ec2 = self.ec**2
         self.eceb = self.ec * self.eb
-    
 
-    def pD(self,q2):
-        return np.sqrt( ( (self.mB**2 + self.mD**2 - q2)/(2*self.mB) )**2 - self.mD**2 )
-        
-    def pDs(self,q2):
-        return np.sqrt( ( (self.mB**2 + self.mDs**2 - q2)/(2*self.mB) )**2 - self.mDs**2 )
-        
-    def q2D(self,w):
-        return -(2 * self.mB * self.mD * w - self.mB**2 - self.mD**2)
-    
-    def q2Ds(self,w):
-        return -(2 * self.mB * self.mDs * w - self.mB**2 - self.mDs**2)
-    
-    def wD(self,q2):
-        return (self.mB**2 + self.mD**2 - q2)/(2*self.mB*self.mD)
-    
-    def wDs(self,q2):
-        return (self.mB**2 + self.mDs**2 - q2)/(2*self.mB*self.mDs)
 
     def PrintAllPars(self):
         
@@ -465,16 +451,7 @@ class BLPRXP:
         print("eb:", self.eb)
         print("ec:", self.ec)
     
-    # Kinematics
-    def wmin(self):
-        return 1.0
-    
-    def wmaxD(self,ml=0):
-        return (self.mB**2 + self.mD**2 - ml**2)/(2*self.mB*self.mD)
-    
-    def wmaxDs(self,ml=0):
-        return (self.mB**2 + self.mDs**2 - ml**2)/(2*self.mB*self.mDs)    
-        
+
     # Leading IW Function 
     def xi(self,w):
     
@@ -672,46 +649,6 @@ class BLPRXP:
     
 
     # ------------------------------------------------------------------------------------------------    
-    # L master functions
-    
-    def L1b(self,w):
-        return self.L1_1(w) + self.eb*self.L1_2(w)
-
-    def L1c(self,w):
-        return self.L1_1(w) + self.ec*self.L1_2(w)
-    
-    def L2b(self,w):
-        return self.L2_1(w) + self.eb*self.L2_2(w)
-
-    def L2c(self,w):
-        return self.L2_1(w) + self.ec*self.L2_2(w)    
-    
-    def L3b(self,w):
-        return self.L3_1(w) + self.eb*self.L3_2(w)
-
-    def L3c(self,w):
-        return self.L3_1(w) + self.ec*self.L3_2(w)   
-    
-    def L4b(self,w):
-        return self.L4_1(w) + self.eb*self.L4_2(w)
-
-    def L4c(self,w):
-        return self.L4_1(w) + self.ec*self.L4_2(w)   
-    
-    def L5b(self,w):
-        return self.L5_1(w) + self.eb*self.L5_2(w)
-
-    def L5c(self,w):
-        return self.L5_1(w) + self.ec*self.L5_2(w)    
-    
-    def L6b(self,w):
-        return self.L6_1(w) + self.eb*self.L6_2(w)
-
-    def L6c(self,w):
-        return self.L6_1(w) + self.ec*self.L6_2(w)        
-        
-
-    # ------------------------------------------------------------------------------------------------    
     # L functions for 1/m corrections
     
     def L1_1(self,w):
@@ -869,60 +806,47 @@ class BLPRXP:
 
 class BToDBLPRXP(BLPRXP):
 
-    def _dGamma(self,Hp,Hm,H0,HS,ml,p,q2):
-        self.GF = 1.16637*10**(-5)
-        rate = self.Vcb**2*self.GF**2/(96*np.pi**3 *self.mB**2)*(1 - ml**2/q2)**2 * p * q2 * ( (Hp**2 + Hm**2 + H0**2)*( 1 + ml**2/(2*q2) ) +  3*ml**2/(2*q2)*HS**2)
-        return rate
-    
-    def dGamma(self,w,ml=0):
-        q2 = self.q2D(w)
-        pD = self.pD(q2)
-        return 2*self.mB*self.mDs * self._dGamma(0,0,self.Hzero(w),self.Hscalar(w),ml,pD,q2)
-
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.kinematics = Kinematics(self.m_B, self.m_D, self.m_L)
     
     def Hzero(self,w):
-        return np.sqrt(self.mB*self.mD)*(self.mB+self.mD)/np.sqrt(self.q2D(w))*np.sqrt(w**2-1.)*self.V1(w)
+        return np.sqrt(self.m_B*self.m_D)*(self.m_B+self.m_D)/np.sqrt(self.kinematics.q2(w))*np.sqrt(w**2-1.)*self.V1(w)
 
     def Hscalar(self,w):
-        return np.sqrt(self.mB*self.mD)*(self.mB-self.mD)/np.sqrt(self.q2D(w))*(w+1)*self.S1(w)
-    
-
+        return np.sqrt(self.m_B*self.m_D)*(self.m_B-self.m_D)/np.sqrt(self.kinematics.q2(w))*(w+1)*self.S1(w)
     
     def V1(self,w):
-        return self.hp(w) - (self.mB - self.mD)/(self.mB + self.mD) * self.hm(w)
+        return self.hp(w) - (self.m_B - self.m_D)/(self.m_B + self.m_D) * self.hm(w)
 
     def S1(self,w):
-        return self.hp(w) - (self.mB + self.mD)/(self.mB - self.mD) * (w-1.)/(w+1.) * self.hm(w)
-       
-    
+        return self.hp(w) - (self.m_B + self.m_D)/(self.m_B - self.m_D) * (w-1.)/(w+1.) * self.hm(w)
 
 
 class BToDStarBLPRXP(BLPRXP):
 
-
-    def _dGamma(self,Hp,Hm,H0,HS,ml,p,q2):
-        self.GF = 1.16637*10**(-5)
-        rate = self.Vcb**2*self.GF**2/(96*np.pi**3 *self.mB**2)*(1 - ml**2/q2)**2 * p * q2 * ( (Hp**2 + Hm**2 + H0**2)*( 1 + ml**2/(2*q2) ) +  3*ml**2/(2*q2)*HS**2)
-        return rate
-        
-    def dGamma(self,w,ml=0):
-        q2 = self.q2Ds(w)
-        pDs = self.pDs(q2)
-        return 2*self.mB*self.mDs * self._dGamma(self.Hplus(w),self.Hminus(w),self.Herzo(w),self.Hscalar(w),ml,pDs,q2)
-
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.kinematics = Kinematics(self.m_B, self.m_Ds, self.m_L)
 
     def Hplus(self,w):
-        return (self.mB+self.mDs)*self.A1(w) - 2*self.mB/(self.mB+self.mDs)*self.pDs(self.q2Ds(w))*self.V(w)
+        return (self.m_B+self.m_Ds)*self.A1(w) - 2*self.m_B/(self.m_B+self.m_Ds)*self.kinematics.p(self.kinematics.q2(w))*self.V(w)
         
     def Hminus(self,w):   
-        return (self.mB+self.mDs)*self.A1(w) + 2*self.mB/(self.mB+self.mDs)*self.pDs(self.q2Ds(w))*self.V(w)
+        return (self.m_B+self.m_Ds)*self.A1(w) + 2*self.m_B/(self.m_B+self.m_Ds)*self.kinematics.p(self.kinematics.q2(w))*self.V(w)
     
-    def Herzo(self,w):
-        return 1./(2*self.mDs*np.sqrt(self.q2Ds(w))) * ( (self.mB**2 - self.mDs**2 - self.q2Ds(w))*(self.mB + self.mDs)*self.A1(w) - (4*self.mB**2 * self.pDs(self.q2Ds(w))**2)/(self.mB + self.mDs)*self.A2(w) )
+    def Hzero(self,w):
+        return 1./(2*self.m_Ds*np.sqrt(self.kinematics.q2(w))) * ( (self.m_B**2 - self.m_Ds**2 - self.kinematics.q2(w))*(self.m_B + self.m_Ds)*self.A1(w) - (4*self.m_B**2 * self.kinematics.p(self.kinematics.q2(w))**2)/(self.m_B + self.m_Ds)*self.A2(w) )
 
     def Hscalar(self,w):
-        return (2*self.mB*self.pDs(self.q2Ds(w)))/np.sqrt(self.q2Ds(w)) * self.A0(w)
+        return (2*self.m_B*self.kinematics.p(self.kinematics.q2(w)))/np.sqrt(self.kinematics.q2(w)) * self.A0(w)
 
+    
+    # def A0(self,w):  # Can be inherited
+    #     return self.R0(w)/self.fDs * self.hA1(w)
+
+    def A0(self,w):
+        return self.A3(w) + self.kinematics.q2(w)/(4*self.m_B*self.m_Ds)*np.sqrt(self.m_B/self.m_Ds) * ( self.hA3(w) - self.m_Ds/self.m_B * self.hA2(w) )
 
     def A1(self,w):  # Can be inherited
         return (w+1.)/2. * self.fDs * self.hA1(w)
@@ -930,9 +854,9 @@ class BToDStarBLPRXP(BLPRXP):
     def A2(self,w):  # Can be inherited
         return self.R2(w)/self.fDs * self.hA1(w)
 
-    def A0(self,w):  # Can be inherited
-        return self.R0(w)/self.fDs * self.hA1(w)
-    
+    def A3(self,w):
+        return (self.m_B + self.m_Ds)/(2*np.sqrt(self.m_B*self.m_Ds)) *( self.m_B/(self.m_B + self.m_Ds) *(w+1) * self.hA1(w) - (self.m_B - self.m_Ds)/(2*self.m_Ds) * ( self.hA3(w) + self.m_Ds/self.m_B * self.hA2(w) ) )
+
     def V(self,w):  # Can be inherited
         return self.R1(w)/self.fDs * self.hA1(w)   
 
@@ -943,14 +867,8 @@ class BToDStarBLPRXP(BLPRXP):
         return self.hV(w) / self.hA1(w)
     
     def R2(self,w):
-        return ( self.hA3(w) + self.mDs/self.mB * self.hA2(w) ) / self.hA1(w)
+        return ( self.hA3(w) + self.m_Ds/self.m_B * self.hA2(w) ) / self.hA1(w)
         
     def R3(self,w):
-        return (self.hA3(w) - self.mDs/self.mB * self.hA2(w)) / self.hA1(w)
+        return (self.hA3(w) - self.m_Ds/self.m_B * self.hA2(w)) / self.hA1(w)
 
-    def A0(self,w):
-        return self.A3(w) + self.q2Ds(w)/(4*self.mB*self.mDs)*np.sqrt(self.mB/self.mDs) * ( self.hA3(w) - self.mDs/self.mB * self.hA2(w) )
-    
-    def A3(self,w):
-        return (self.mB + self.mDs)/(2*np.sqrt(self.mB*self.mDs)) *( self.mB/(self.mB + self.mDs) *(w+1) * self.hA1(w) - (self.mB - self.mDs)/(2*self.mDs) * ( self.hA3(w) + self.mDs/self.mB * self.hA2(w) ) )
-    

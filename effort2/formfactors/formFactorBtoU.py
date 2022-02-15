@@ -1,6 +1,6 @@
 import abc
 
-from effort2.formfactors.formFactorBase import FormFactor
+from effort2.formfactors.kinematics import FormFactor
 
 
 class FormFactorBToU(FormFactor):
