@@ -17,7 +17,7 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
     def __init__(
         self, 
         m_B: float, 
-        m_M: float, 
+        m_V: float, 
         m_L: float = 0
         ) -> None:
         r"""[summary]
@@ -29,10 +29,10 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
         """
         super().__init__()
         self.m_B = m_B
-        self.m_M = m_M
+        self.m_V = m_V
         self.m_L = m_L
-        self.rprime = 2 * np.sqrt(self.m_B * self.m_M) / (self.m_B + self.m_M)  # Equivalent to fDs
-        self.kinematics = Kinematics(m_B, m_M, m_L)
+        self.rprime = 2 * np.sqrt(self.m_B * self.m_V) / (self.m_B + self.m_V)  # Equivalent to fDs
+        self.kinematics = Kinematics(m_B, m_V, m_L)
 
 
     def A0(self, w: float) -> float:
@@ -52,18 +52,18 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
 
 
     def Hplus(self, w: float) -> float:
-        return (self.m_B + self.m_M) * self.A1(w) - 2 * self.m_B / (self.m_B + self.m_M) * self.m_M * (
+        return (self.m_B + self.m_V) * self.A1(w) - 2 * self.m_B / (self.m_B + self.m_V) * self.m_V * (
                 w ** 2 - 1) ** 0.5 * self.V(w)
 
 
     def Hminus(self, w: float) -> float:
-        return (self.m_B + self.m_M) * self.A1(w) + 2 * self.m_B / (self.m_B + self.m_M) * self.m_M * (
+        return (self.m_B + self.m_V) * self.A1(w) + 2 * self.m_B / (self.m_B + self.m_V) * self.m_V * (
                 w ** 2 - 1) ** 0.5 * self.V(w)
 
 
     def Hzero(self, w: float) -> float:
         m_B = self.m_B
-        m_M = self.m_M
+        m_M = self.m_V
         q2 = (m_B ** 2 + m_M ** 2 - 2 * w * m_B * m_M)
         return 1 / (2 * m_M * q2 ** 0.5) * ((m_B ** 2 - m_M ** 2 - q2) * (m_B + m_M) * self.A1(w)
                                             - 4 * m_B ** 2 * m_M ** 2 * (w ** 2 - 1) / (m_B + m_M) * self.A2(w))
@@ -115,7 +115,7 @@ class BToDStarCLN(FormFactorBToDstar):
     def __init__(
         self,
         m_B: float,
-        m_M: float,
+        m_V: float,
         h_A1_1: float,
         rho2: float, 
         R1_1: float, 
@@ -131,7 +131,7 @@ class BToDStarCLN(FormFactorBToDstar):
             R1_1 (float, optional): [description]
             R2_1 (float, optional): [description]
         """
-        super().__init__(m_B, m_M)
+        super().__init__(m_B, m_V)
         self.h_A1_1 = h_A1_1
         self.rho2 = rho2
         self.R1_1 = R1_1
@@ -185,7 +185,7 @@ class BToDStarBGL(FormFactorBToDstar):
     def __init__(
         self, 
         m_B: float, 
-        m_M: float, 
+        m_V: float, 
         exp_coeff_a: tuple,
         exp_coeff_b: tuple,
         exp_coeff_c: tuple,
@@ -195,7 +195,7 @@ class BToDStarBGL(FormFactorBToDstar):
         axialvector_poles: list = [6.730, 6.736, 7.135, 7.142],
         vector_poles: list = [6.337, 6.899, 7.012, 7.280], 
         ) -> None:
-        super().__init__(m_B, m_M)
+        super().__init__(m_B, m_V)
 
         # BGL specifics, default is given in arXiv:1703.08170v2
         self.chiT_plus33 = chiT_plus33
@@ -203,7 +203,7 @@ class BToDStarBGL(FormFactorBToDstar):
         self.n_i = n_i # effective number of light quarks
         self.axialvector_poles = axialvector_poles
         self.vector_poles = vector_poles
-        self.r = m_M / m_B
+        self.r = m_V / m_B
         self.set_expansion_coefficients(exp_coeff_a, exp_coeff_b, exp_coeff_c)
 
 
@@ -224,12 +224,12 @@ class BToDStarBGL(FormFactorBToDstar):
         """
         self.expansion_coefficients_a = [*exp_coeff_a]
         self.expansion_coefficients_b = [*exp_coeff_b]
-        self.expansion_coefficients_c = [((self.m_B - self.m_M) * self.phi_F1(0) / self.phi_f(0)) * exp_coeff_b[0], *exp_coeff_c]
+        self.expansion_coefficients_c = [((self.m_B - self.m_V) * self.phi_F1(0) / self.phi_f(0)) * exp_coeff_b[0], *exp_coeff_c]
 
 
     def h_A1(self, w):
         z = self.z(w)
-        return self.f(z) / (self.m_B * self.m_M) ** 0.5 / (1 + w)
+        return self.f(z) / (self.m_B * self.m_V) ** 0.5 / (1 + w)
 
 
     def R0(self) -> None:
@@ -238,7 +238,7 @@ class BToDStarBGL(FormFactorBToDstar):
 
     def R1(self, w):
         z = self.z(w)
-        return (w + 1) * self.m_B * self.m_M * self.g(z) / self.f(z)
+        return (w + 1) * self.m_B * self.m_V * self.g(z) / self.f(z)
 
 
     def R2(self, w):
@@ -273,7 +273,7 @@ class BToDStarBGL(FormFactorBToDstar):
 
     @functools.lru_cache()
     def z_p(self, m_pole):
-        return self._z_p(m_pole, self.m_B, self.m_M)
+        return self._z_p(m_pole, self.m_B, self.m_V)
 
 
     @staticmethod
