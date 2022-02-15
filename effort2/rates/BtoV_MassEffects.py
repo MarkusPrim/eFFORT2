@@ -50,7 +50,7 @@ class BtoV:
 
         # Boundaries of the 1D rate. These assumptions are imposed in the analytical integrations in Mathematica.
         self.kinematics = Kinematics(self.mB, self.mV, self.mL)
-        self.w_min, self.w_max = self.kinematics.w_range
+        self.w_min, self.w_max = self.kinematics.w_range_numerical_stable
 
 
     def dGamma_dw(

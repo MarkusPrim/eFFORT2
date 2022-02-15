@@ -1,6 +1,6 @@
 import numpy as np
-import scipy.integrate
-import scipy.stats
+from effort2.formfactors.kinematics import Kinematics
+from effort2.math.integrate import quad
 
 
 class BtoV:
@@ -43,26 +43,24 @@ class BtoV:
         self.Vcb = Vcb
         self.mB = FF.m_B if m_B is None else m_B
         self.mV = FF.m_V if m_V is None else m_V
+        self.mL = 0
         self.GF = G_F
         self.eta_EW = eta_EW
         self.BR_Dstar_decay = BR_Dstar_decay
 
         # Boundaries of the 4D rate. These assumptions are imposed in the analytical integrations in Mathematica.
-        self.w_min = 1
-        self.w_max = (self.mB ** 2 + self.mV ** 2) / (2 * self.mB * self.mV)
-        self.cosL_min = -1
-        self.cosL_max = 1
-        self.cosV_min = -1
-        self.cosV_max = 1
-        self.chi_min = 0
-        self.chi_max = 2*np.pi
+        self.kinematics = Kinematics(self.mB, self.mV, self.mL)
+        self.w_min, self.w_max = self.kinematics.w_range_numerical_stable
+        self.cosL_min, self.cosL_max = self.kinematics.cosL_range
+        self.cosV_min, self.cosV_max = self.kinematics.cosV_range
+        self.chi_min, self.chi_max = self.kinematics.chi_range
         
         # These are constant factors which turn up in each rate calculation. Let us do it once and cache the result.
         self.r = self.mV / self.mB 
         self.N0 = 6 * self.mB * self.mV ** 2 / 8 / (4*np.pi) ** 4 * self.GF ** 2 * self.eta_EW ** 2 * self.BR_Dstar_decay #* 1e10
 
         # These are required for the generator feature.
-        self.rate_max = self.dGamma_dw_dcosL_dcosV_dchi(*self.dGamma_max())  # Add 10% on top just to be sure.
+        # self.rate_max = self.dGamma_dw_dcosL_dcosV_dchi(*self.dGamma_max())  # Add 10% on top just to be sure.
 
 
     def dGamma_dw_dcosL_dcosV_dchi(
@@ -151,7 +149,7 @@ class BtoV:
 
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
-        output = scipy.integrate.quad(lambda w: 1 / 3. * f(w) * self.N0 * self.Vcb ** 2 * (
+        output = quad(lambda w: 1 / 3. * f(w) * self.N0 * self.Vcb ** 2 * (
             - ( (chimax - chimin) * (cosLmax + cosLmax ** 2 + cosLmax ** 3 / 3 - 1 / 3. * cosLmin * (3 + cosLmin * (3 + cosLmin))) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * self.FF.Hminus(w) ** 2 )
             - 1 / 3. * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * self.FF.Hminus(w) * self.FF.Hplus(w)
             - 1 / 3. * (chimax - chimin) * (cosLmax - cosLmin) * (3 + cosLmax ** 2 + cosLmax * (-3 + cosLmin) + (-3 + cosLmin) * cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * self.FF.Hplus(w) ** 2
@@ -293,7 +291,7 @@ class BtoV:
         assert self.cosL_min <= cosL <= self.cosL_max
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
-        return scipy.integrate.quad(
+        return quad(
             lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * self.FF.Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * self.FF.Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * self.FF.Hzero(w) ** 2),
             self.w_min,
             self.w_max
@@ -318,7 +316,7 @@ class BtoV:
         assert self.cosV_min <= cosV <= self.cosV_max
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
-        return scipy.integrate.quad(
+        return quad(
             lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * self.FF.Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * self.FF.Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * self.FF.Hzero(w) ** 2),
             self.w_min,
             self.w_max
@@ -343,68 +341,68 @@ class BtoV:
         assert self.chi_min <= chi <= self.chi_max
         f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
 
-        return scipy.integrate.quad(
+        return quad(
             lambda w: f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * self.FF.Hminus(w) ** 2 - 32 * np.cos(2 * chi) * self.FF.Hminus(w) * self.FF.Hplus(w) + 32 * self.FF.Hplus(w) ** 2 + 32 * self.FF.Hzero(w) ** 2), 
             self.w_min, 
             self.w_max
             )[0]
 
 
-    def dGamma_max(self) -> float:
-        """Return the maximum of the rate.
-
-        This is used for the generator feature. 
-
-        Nota bene: If the parameters change (Vxb and/or the form factors, this value will also change).
-
-        Returns:
-            float: Maximum of the differential decay rate.
-        """
-        return scipy.optimize.fmin(
-            lambda x: -self.dGamma_dw_dcosL_dcosV_dchi(*x),
-            np.array([
-                (self.w_max + self.w_min) / 2,
-                (self.cosL_max + self.cosL_min) / 2,
-                (self.cosV_max + self.cosV_min) / 2,
-                (self.chi_max + self.chi_min) / 2
-                ]),
-            disp=False
-            )
-
-
-    def sample_points(self, N) -> np.array:
-        """Use the hit-or-miss method until a single point is found.
-
-        Args:
-            N (int): Sampling size to make efficient use of the random number generator.
-
-        Returns:
-            list: Returns a set of random points (w, cosL, cosV, chi). The length of the array is non-deterministic (generator efficiency * sampling size).
-        """
-        x = np.array([
-            scipy.stats.uniform.rvs(self.w_min, self.w_max - self.w_min, size=N),
-            scipy.stats.uniform.rvs(self.cosL_min, self.cosL_max - self.cosL_min, size=N),
-            scipy.stats.uniform.rvs(self.cosV_min, self.cosV_max - self.cosV_min, size=N),
-            scipy.stats.uniform.rvs(self.chi_min, self.chi_max - self.chi_min, size=N)
-        ]).transpose()
-
-        f = scipy.stats.uniform.rvs(0, self.rate_max, size=N)
-        return [(*_x, _f) for _x, _f in zip(x, f) if self.dGamma_dw_dcosL_dcosV_dchi(*_x) > _f]
+    # def dGamma_max(self) -> float:
+    #     """Return the maximum of the rate.
+ 
+    #     This is used for the generator feature. 
+ 
+    #     Nota bene: If the parameters change (Vxb and/or the form factors, this value will also change).
+ 
+    #     Returns:
+    #         float: Maximum of the differential decay rate.
+    #     """
+    #     return scipy.optimize.fmin(
+    #         lambda x: -self.dGamma_dw_dcosL_dcosV_dchi(*x),
+    #         np.array([
+    #             (self.w_max + self.w_min) / 2,
+    #             (self.cosL_max + self.cosL_min) / 2,
+    #             (self.cosV_max + self.cosV_min) / 2,
+    #             (self.chi_max + self.chi_min) / 2
+    #             ]),
+    #         disp=False
+    #         )
 
 
-    def generate_events(self, N):
-        """Generate the requested number of events.
-
-        The efficiency of the hit-or.miss method is roughly 25%. To make efficient use of the random number generator of scipy, we over-sample by a factor of 5.
-        This way we should usually be able to generate the requested number of events in one go.
-
-        Args:
-            N (int): Number of events to be generated.
-
-        Returns:
-            np.array: Array of random data points (w, cosL, cosV, chi) drawn from the differentical decay rate.
-        """
-        events = []
-        while len(events) < N:
-            events += self.sample_points(N*5)
-        return np.array(events[:N])
+    # def sample_points(self, N) -> np.array:
+    #     """Use the hit-or-miss method until a single point is found.
+ 
+    #     Args:
+    #         N (int): Sampling size to make efficient use of the random number generator.
+ 
+    #     Returns:
+    #         list: Returns a set of random points (w, cosL, cosV, chi). The length of the array is non-deterministic (generator efficiency * sampling size).
+    #     """
+    #     x = np.array([
+    #         scipy.stats.uniform.rvs(self.w_min, self.w_max - self.w_min, size=N),
+    #         scipy.stats.uniform.rvs(self.cosL_min, self.cosL_max - self.cosL_min, size=N),
+    #         scipy.stats.uniform.rvs(self.cosV_min, self.cosV_max - self.cosV_min, size=N),
+    #         scipy.stats.uniform.rvs(self.chi_min, self.chi_max - self.chi_min, size=N)
+    #     ]).transpose()
+ 
+    #     f = scipy.stats.uniform.rvs(0, self.rate_max, size=N)
+    #     return [(*_x, _f) for _x, _f in zip(x, f) if self.dGamma_dw_dcosL_dcosV_dchi(*_x) > _f]
+ 
+ 
+    # def generate_events(self, N):
+    #     """Generate the requested number of events.
+ 
+    #     The efficiency of the hit-or.miss method is roughly 25%. To make efficient use of the random number generator of scipy, we over-sample by a factor of 5.
+    #     This way we should usually be able to generate the requested number of events in one go.
+ 
+    #     Args:
+    #         N (int): Number of events to be generated.
+ 
+    #     Returns:
+    #         np.array: Array of random data points (w, cosL, cosV, chi) drawn from the differentical decay rate.
+    #     """
+    #     events = []
+    #     while len(events) < N:
+    #         events += self.sample_points(N*5)
+    #     return np.array(events[:N])
