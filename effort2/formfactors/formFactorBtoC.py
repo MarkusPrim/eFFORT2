@@ -350,6 +350,7 @@ class BLPRXP:
         Vcb: float = 1,
         RhoSq: float = 1.2,
         Cur: float = 80,
+        D: float = 0,
         chi21: float = 0,
         chi2p: float = 0,
         chi3p: float = 0,
@@ -383,6 +384,7 @@ class BLPRXP:
         self.Vcb = Vcb
         self.RhoSq = RhoSq
         self.Cur = Cur
+        self.D = D
         self.chi21 = chi21
         self.chi2p = chi2p
         self.chi3p = chi3p
@@ -401,7 +403,7 @@ class BLPRXP:
         # Calculate additional parameters
         
         # Quark masses
-        corr1S = 2.*(self.als/3. * 0.85)**2
+        corr1S = 2.*(self.als/3. * 0.8)**2
         _dmbc = self.dmbc
         mb_0 = self.mb1S
         mb_1 = self.mb1S * corr1S
@@ -450,20 +452,19 @@ class BLPRXP:
         print("z:", self.z)
         print("eb:", self.eb)
         print("ec:", self.ec)
-    
 
-    # Leading IW Function 
+    # Leading IW Function
     def xi(self,w):
-    
+   
         # optimized expansion
         a = ( (1 + self.rD)/(2*np.sqrt(self.rD)) )**0.5
         zs = ( (w+1)**0.5 - (2)**0.5*a )/( (w+1)**0.5 + (2)**0.5*a )
         zsn = ( 1 - a )/( 1 + a )
 
-        xi1 = 1 - 8*a**2*self.RhoSq*zsn + self.Cur*zsn**2
-                
-        return (1 - 8*a**2*self.RhoSq*zs + self.Cur*zs**2 ) / xi1
-      
+        xi1 = 1 - 8*a**2*self.RhoSq*zsn + self.Cur*zsn**2 + self.D*zsn**3
+               
+        return (1 - 8*a**2*self.RhoSq*zs + self.Cur*zs**2 + self.D*zs**3 ) / xi1
+
     # ------------------------------------------------------------------------------------------------        
 
     def hph(self,w):
@@ -511,21 +512,20 @@ class BLPRXP:
         return self.ec2 * self.L1_2(w) + self.eb2 * self.L1_2(w) - self.eceb * self.M8(w)
     
     def hmh_2(self,w):
-        return self.ec2 * self.L4_2(w) + self.eb2 * self.L4_2(w)
+        return self.ec2 * self.L4_2(w) - self.eb2 * self.L4_2(w)
      
     def hVh_2(self,w):
-        return self.ec2 * (self.L2_2(w) - self.L5_2(w)) + self.eb2 * (self.L2_2(w) - self.L5_2(w)) + self.eceb * self.M9(w)
+        return self.ec2 * (self.L2_2(w) - self.L5_2(w)) + self.eb2 * (self.L1_2(w) - self.L4_2(w)) + self.eceb * self.M9(w)
     
     def hA1h_2(self,w):
         wm1Owp1 = (w - 1.)/(w + 1.)
-        return self.ec2 * (self.L2_2(w) - self.L5_2(w) * wm1Owp1) + self.eb2 * (self.L2_2(w) - self.L5_2(w) * wm1Owp1) + self.eceb * self.M9(w)
+        return self.ec2 * (self.L2_2(w) - self.L5_2(w) * wm1Owp1) + self.eb2 * (self.L1_2(w) - self.L4_2(w) * wm1Owp1) + self.eceb * self.M9(w)
         
     def hA2h_2(self,w):
-        return self.ec2 * (self.L6_2(w) + self.L3_2(w)) + self.eb2 * (self.L6_2(w) + self.L3_2(w)) - self.eceb * self.M10(w)
+        return self.ec2 * (self.L6_2(w) + self.L3_2(w)) - self.eceb * self.M10(w)
     
     def hA3h_2(self,w):
-        return self.ec2 * (self.L2_2(w) - self.L3_2(w) + self.L6_2(w) - self.L5_2(w)) + self.eb2 * (self.L2_2(w) - self.L3_2(w) + self.L6_2(w) - self.L5_2(w)) + self.eceb * (self.M9(w) + self.M10(w))
-
+        return self.ec2 * (self.L2_2(w) - self.L3_2(w) + self.L6_2(w) - self.L5_2(w)) + self.eb2 * (self.L1_2(w) - self.L4_2(w)) + self.eceb * (self.M9(w) + self.M10(w))
     
     # ------------------------------------------------------------------------------------------------
     # HQE Form factors
