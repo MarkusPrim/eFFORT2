@@ -16,10 +16,23 @@ class Kinematics:
         self.m_B = m_B
         self.m_M = m_M
         self.m_L = m_L
+
         self.w_min = 1
         self.w_max = (m_B ** 2 + m_M ** 2- m_L**2) / (2 * m_B * m_M)
         self.w_range = (self.w_min, self.w_max)
         self.w_range_numerical_stable = (self.w_min + numerical_epsilon, self.w_max - numerical_epsilon)
+        
+        self.cosL_min = -1
+        self.cosL_max = 1
+        self.cosL_range = self.cosL_min, self.cosL_max
+
+        self.cosV_min = -1
+        self.cosV_max = 1
+        self.cosV_range = self.cosV_min, self.cosV_max
+
+        self.chi_min = 0
+        self.chi_max = 2*np.pi
+        self.chi_range = self.chi_min, self.chi_max        
 
     
     def p(self, q2):
