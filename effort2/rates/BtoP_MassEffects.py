@@ -43,16 +43,15 @@ class BtoP:
 
         self.Vcb = Vcb
         self.mB = FF.m_B if m_B is None else m_B
-        self.mP = FF.m_D if m_P is None else m_P
+        self.mP = FF.m_P if m_P is None else m_P
         self.mL = FF.m_L if m_L is None else m_L
         self.GF = G_F
         self.eta_EW = eta_EW
         self.BR_Dstar_decay = BR_D_decay
 
         # Boundaries of the 1D rate. These assumptions are imposed in the analytical integrations in Mathematica.
-        self.w_min = 1
-        self.w_max = (self.mB ** 2 + self.mP ** 2) / (2 * self.mB * self.mP)
         self.kinematics = Kinematics(self.mB, self.mP, self.mL)
+        self.w_min, self.w_max = self.kinematics.w_range_numerical_stable
 
 
     def dGamma_dw(

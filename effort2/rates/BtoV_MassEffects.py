@@ -42,7 +42,7 @@ class BtoV:
 
         self.Vcb = Vcb
         self.mB = FF.m_B if m_B is None else m_B
-        self.mV = FF.m_Ds if m_V is None else m_V
+        self.mV = FF.m_V if m_V is None else m_V
         self.mL = FF.m_L if m_L is None else m_L
         self.GF = G_F
         self.eta_EW = eta_EW
