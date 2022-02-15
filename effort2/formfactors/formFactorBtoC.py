@@ -380,6 +380,10 @@ class BLPRXP:
         self.mBBar = mBBar
         self.mDBar = mDBar
         
+        # Definitions for automatic settings when doing composition
+        self.m_P = m_D
+        self.m_V = m_Ds
+
         # Fit Parameters
         self.Vcb = Vcb
         self.RhoSq = RhoSq
