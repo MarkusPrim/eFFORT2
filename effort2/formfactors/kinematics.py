@@ -43,3 +43,7 @@ class Kinematics:
 
     def w(self, q2):
         return (self.m_B ** 2 + self.m_M ** 2 - q2) / (2 * self.m_B * self.m_M)
+
+
+if __name__ == "__main__":
+    pass

@@ -406,3 +406,7 @@ class BtoV:
     #     while len(events) < N:
     #         events += self.sample_points(N*5)
     #     return np.array(events[:N])
+
+
+if __name__ == "__main__":
+    pass

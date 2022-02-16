@@ -113,3 +113,7 @@ class BtoV:
             float: [description]
         """
         return self.DGamma_Dw(self.w_min, self.w_max)
+
+
+if __name__ == "__main__":
+    pass
