@@ -1,3 +1,6 @@
+import functools
+import numba as nb
+import numpy as np
 from effort2.formfactors.formFactorBtoC import FormFactorBToDstar
 
 
