@@ -16,6 +16,7 @@ class Kinematics:
         self.m_B = m_B
         self.m_M = m_M
         self.m_L = m_L
+        self.numerical_epsilon = numerical_epsilon
 
         self.w_min = 1
         self.w_max = (m_B ** 2 + m_M ** 2- m_L**2) / (2 * m_B * m_M)

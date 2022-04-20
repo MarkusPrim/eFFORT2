@@ -133,8 +133,8 @@ class BtoP:
         q2max: float = None,
         debug: bool = False
         ) -> float:
-        wmin = self.kinematics.w(q2min)
-        wmax = self.kinematics.w(q2max)
+        wmin = self.kinematics.w(q2max)
+        wmax = self.kinematics.w(q2min)
         return self.DGamma_Dw(wmin, wmax, debug)
 
 
