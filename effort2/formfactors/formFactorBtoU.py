@@ -1,9 +1,9 @@
 import abc
+import numpy as np
 
-from effort2.formfactors.kinematics import FormFactor
+from effort2.formfactors.kinematics import Kinematics
 
-
-class FormFactorBToU(FormFactor):
+class FormFactorBToU:
     r"""This class defines the interface for any form factor parametrization to be used in conjunction with the rate implementations
 for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands for Pseudoscalar and V stands for Vector light mesons.
     """
@@ -11,36 +11,40 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
     def __init__(
         self, 
         m_B: float, 
-        m_M: float, 
+        m_P: float, 
         m_L: float = 0
         ) -> None:
         r"""[summary]
 
         Args:
             m_B (float): Mass of the B meson.
-            m_M (float): Mass of the final state meson.
+            m_P (float): Mass of the final state meson.
             m_L (float): Mass of the final state lepton. Defaults to 0 (zero lepton mass approximation).
         """
-        super().__init__(m_B, m_M, m_L)
+        #super().__init__(m_B, m_P, m_L)
+        self.m_B = m_B
+        self.m_P = m_P
+        self.m_L = m_L
+        self.kinematics = Kinematics(m_B, m_P, m_L)
 
 
     def kaellen(self, q2):
-        return ((self.m_B + self.m_M) ** 2 - q2) * ((self.m_B - self.m_M) ** 2 - q2)
+        return ((self.m_B + self.m_P) ** 2 - q2) * ((self.m_B - self.m_P) ** 2 - q2)
 
 
     def Hplus(self, w: float) -> float:
         q2 = self.q2(w)
-        return self.kaellen(q2) ** 0.5 * self.V(q2) / (self.m_B + self.m_M) + (self.m_B + self.m_M) * self.A1(q2)
+        return self.kaellen(q2) ** 0.5 * self.V(q2) / (self.m_B + self.m_P) + (self.m_B + self.m_P) * self.A1(q2)
 
 
     def Hminus(self, w: float) -> float:
         q2 = self.q2(w)
-        return self.kaellen(q2) ** 0.5 * self.V(q2) / (self.m_B + self.m_M) - (self.m_B + self.m_M) * self.A1(q2)
+        return self.kaellen(q2) ** 0.5 * self.V(q2) / (self.m_B + self.m_P) - (self.m_B + self.m_P) * self.A1(q2)
 
 
     def Hzero(self, w: float) -> float:
         q2 = self.q2(w)
-        return 8 * self.m_B * self.m_M / q2 ** 0.5 * self.A12(q2)
+        return 8 * self.m_B * self.m_P / q2 ** 0.5 * self.A12(q2)
 
 
     def Hscalar(self, w: float) -> float:
@@ -68,12 +72,56 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
         pass
 
 
+class BToPiBCL(FormFactorBToU):
+
+    def __init__(self, m_B: float, m_P: float, m_L: float, mBstar: float = 5.325):
+        super().__init__(m_B, m_P, m_L)
+        self.mBstar = mBstar
+        self.tplus = (self.m_B + self.m_P) ** 2
+        self.tminus = (self.m_B - self.m_P) ** 2
+        self.tzero = self.tplus * (1 - (1 - self.tminus / self.tplus) ** 0.5)
+
+        self._coefficients = None
+
+    @property
+    def coefficients(self):
+        return self._coefficients
+
+    @coefficients.setter
+    def coefficients(self, coefficients):
+        self._coefficients = coefficients
+
+    def fzero(self, q2):
+        N = 4
+        return sum([b * self.z(q2) ** n for n, b in enumerate(self._coefficients[N:])])
+
+    def fplus(self, q2):
+        N = 4
+        return 1 / (1 - q2 / self.mBstar ** 2) * sum(
+            [b * (self.z(q2) ** n - (-1) ** (n - N) * n / N * self.z(q2) ** N) for n, b in
+             enumerate(self._coefficients[:N])]
+        )
+
+    def z(self, q2):
+        return (np.sqrt(self.tplus - q2) - np.sqrt(self.tplus - self.tzero)) / \
+               (np.sqrt(self.tplus - q2) + np.sqrt(self.tplus - self.tzero))
+
+    def Hzero(self, w):  # Could be the implementation of parent 
+        q2 = self.kinematics.q2(w)
+        return 2 * self.m_B * self.kinematics.p(q2) / np.sqrt(q2) * self.fplus(q2)
+
+    def Hscalar(self, w):  # Could be the implementation of parent
+        q2 = self.kinematics.q2(w)
+        return (self.m_B ** 2 - self.m_P ** 2) / np.sqrt(q2) * self.fzero(q2)
+
+
+
 class BToRhoBSZ(FormFactorBToU):
 
     def __init__(
         self,
         m_B: float,
-        m_M: float, 
+        m_P: float, 
         m_L: float,
         A0_i: tuple,
         A1_i: tuple,
@@ -85,7 +133,7 @@ class BToRhoBSZ(FormFactorBToU):
         lambdaBar: float = 0.5,
         pole_masses: dict = None,
         ) -> None:
-        super().__init__(m_B, m_M, m_L)
+        super().__init__(m_B, m_P, m_L)
         self.m_b = m_B - lambdaBar
         self.m_u = 0
         self.set_expansion_coefficients(A0_i, A1_i, A12_i, V_i, T1_i, T2_i, T23_i)
@@ -101,8 +149,8 @@ class BToRhoBSZ(FormFactorBToU):
             }
         else:
             self.pole_masses = pole_masses
-        self.tplus = (self.m_B + self.m_M) ** 2
-        self.tminus = (self.m_B - self.m_M) ** 2
+        self.tplus = (self.m_B + self.m_P) ** 2
+        self.tminus = (self.m_B - self.m_P) ** 2
         self.tzero = self.tplus * (1 - (1 - self.tminus / self.tplus) ** 0.5)
         
 
@@ -138,7 +186,7 @@ class BToRhoBSZ(FormFactorBToU):
             T2_i (tuple): Expansion coefficients for the form factor T2. Not required for the SM calculations here.
             T23_i (tuple): Expansion coefficients for the form factor T23. Not required for the SM calculations here.
         """
-        self.expansion_coefficients_A0 = [8 * self.m_B * self.m_M / (self.m_B ** 2 - self.m_M ** 2) * A12_i[0], *A0_i]
+        self.expansion_coefficients_A0 = [8 * self.m_B * self.m_P / (self.m_B ** 2 - self.m_P ** 2) * A12_i[0], *A0_i]
         self.expansion_coefficients_A1 = [*A1_i]
         self.expansion_coefficients_A12 = [*A12_i]
         self.expansion_coefficients_V = [*V_i]
@@ -165,7 +213,7 @@ class BToRhoBSZ(FormFactorBToU):
 
 
     def AP(self, q2):
-        return -2 * self.m_M / (self.m_b + self.m_u) * self.A0(q2)
+        return -2 * self.m_P / (self.m_b + self.m_u) * self.A0(q2)
 
 
     def A0(self, q2):
@@ -181,8 +229,8 @@ class BToRhoBSZ(FormFactorBToU):
 
 
     def A2(self, q2):
-        return ((self.m_B + self.m_M) ** 2 * (self.m_B ** 2 - self.m_M ** 2 - q2) * self.A1(w)
-            - 16 * self.m_B * self.m_M ** 2 * (self.m_B + self.m_M) * self.A12(w)) / (2 * self.m_B * self.m_M) ** 2
+        return ((self.m_B + self.m_P) ** 2 * (self.m_B ** 2 - self.m_P ** 2 - q2) * self.A1(w)
+            - 16 * self.m_B * self.m_P ** 2 * (self.m_B + self.m_P) * self.A12(w)) / (2 * self.m_B * self.m_P) ** 2
 
 
     def V(self, q2):
