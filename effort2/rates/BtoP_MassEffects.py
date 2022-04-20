@@ -58,7 +58,7 @@ class BtoP:
         self, 
         w: float,
         ) -> float:
-        """Full 4D differential decay rate for B to V(ector) meson decays.
+        """Full 4D differential decay rate for B to P(seudoscalar) meson decays.
 
         Args:
             w (float): Recoil against the hadronic system.
@@ -81,7 +81,7 @@ class BtoP:
         wmax: float = None,
         debug: bool = False
         ) -> float:
-        """The differential decay rate for B to V(ector) meson decays, where the angular variables are analytically integrated.
+        """The differential decay rate for B to P(seudoscalar) meson decays, where the angular variables are analytically integrated.
         
         The integration over w is performed numerically, because analyitcal integration would introduce a dependency on the chosen form factor parametrization.
 
@@ -114,6 +114,28 @@ class BtoP:
             float: [description]
         """
         return self.DGamma_Dw(self.w_min, self.w_max)
+
+
+    def dGamma_dq2(
+        self,
+        q2: float
+        ) -> float:
+        p = self.kinematics.p(q2)
+        w = self.kinematics.w(q2)
+
+        return 2 * self.mB * self.mP * self.Vcb ** 2 * self.GF ** 2 / (96*np.pi**3 * self.mB ** 2) * (1 - self.mL **2/q2)**2 * p * q2 * ( 
+            self.FF.Hzero(w) ** 2 * (1 + self.mL ** 2 / (2*q2)) + 3 * self.mL **2 / (2*q2) * self.FF.Hscalar(w) ** 2)
+
+
+    def DGamma_Dq2(
+        self,
+        q2min: float = None,
+        q2max: float = None,
+        debug: bool = False
+        ) -> float:
+        wmin = self.kinematics.w(q2min)
+        wmax = self.kinematics.w(q2max)
+        return self.DGamma_Dw(wmin, wmax, debug)
 
 
 if __name__ == "__main__":

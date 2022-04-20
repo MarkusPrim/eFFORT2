@@ -3,7 +3,7 @@ import numpy as np
 
 class Kinematics:
 
-    def __init__(self, m_B, m_M, m_L, numerical_epsilon=1e-5) -> None:
+    def __init__(self, m_B, m_M, m_L, numerical_epsilon=1e-8) -> None:
         r"""This class defines common kinematic variables.
 
         Args:
