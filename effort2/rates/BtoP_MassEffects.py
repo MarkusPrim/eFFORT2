@@ -9,6 +9,7 @@ class BtoP:
         self, 
         FF: None,
         Vcb: float, 
+        P: str,
         m_B: float = None, 
         m_P: float = None, 
         m_L: float = None,
@@ -32,6 +33,7 @@ class BtoP:
 
         Args:
             Vcb (float): CKM parameter Vcb.
+            P (str): Final state particle has to be given specifically to use the correct Glebsch Gordan coefficient: pi0, pi+, D
             m_B (float): B meson mass. It is assumed that this value will never change when handling caches.
             m_V (float): V(ector) meson mass. It is assumed that this value will never change when handling caches.
             G_F (float): Effective coupling constant of the weak interaction (Fermi's constant) in units of GeV^-2. Default value from: https://pdg.lbl.gov/2020/reviews/rpp2020-rev-phys-constants.pdf.
@@ -40,8 +42,13 @@ class BtoP:
         """
         assert 0 <= BR_D_decay <= 1
         self.FF = FF
-
         self.Vcb = Vcb
+        self.GGC = {
+            "pi0": 1/2,
+            "pi+": 1,
+            "D": 1,
+        }[P]
+
         self.mB = FF.m_B if m_B is None else m_B
         self.mP = FF.m_P if m_P is None else m_P
         self.mL = FF.m_L if m_L is None else m_L
