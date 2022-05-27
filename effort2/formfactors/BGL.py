@@ -51,6 +51,29 @@ class BToDStarBGL(FormFactorBToDstar):
         self.expansion_coefficients_c = [((self.m_B - self.m_V) * self.phi_F1(0) / self.phi_f(0)) * exp_coeff_b[0], *exp_coeff_c]
 
 
+    def Hplus(self, w: float) -> float:
+        """Overwritten generic function from parent class, because this is numerical more stable when fitting."""
+        m_B = self.m_B
+        z = self.z(w)
+        q2 = self.kinematics.q2(w)
+        return self.f(z) - m_B * self.kinematics.p(q2) * self.g(z)
+
+
+    def Hminus(self, w: float) -> float:
+        """Overwritten generic function from parent class, because this is numerical more stable when fitting."""
+        m_B = self.m_B
+        z = self.z(w)
+        q2 = self.kinematics.q2(w)
+        return self.f(z) + m_B * self.kinematics.p(q2) * self.g(z) 
+
+
+    def Hzero(self, w: float) -> float:
+        """Overwritten generic function from parent class, because this is numerical more stable when fitting."""
+        z = self.z(w)
+        q2 = self.kinematics.q2(w)
+        return self.F1(z) / q2 ** 0.5
+
+
     def h_A1(self, w):
         z = self.z(w)
         return self.f(z) / (self.m_B * self.m_V) ** 0.5 / (1 + w)
