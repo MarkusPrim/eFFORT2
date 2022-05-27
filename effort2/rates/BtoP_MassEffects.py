@@ -78,7 +78,7 @@ class BtoP:
         q2 = self.kinematics.q2(w)
         p = self.kinematics.p(q2)
 
-        return 2 * self.GGC * self.mB * self.mP * self.Vcb ** 2 * self.GF ** 2 / (96*np.pi**3 * self.mB ** 2) * (1 - self.mL **2/q2)**2 * p * q2 * ( 
+        return 8 / 3. * p * self.GGC * self.Vcb ** 2 * self.GF ** 2 * q2 / (256*np.pi**3 * self.mB ** 2) * (1 - self.mL **2/q2)**2 * ( 
             self.FF.Hzero(w) ** 2 * (1 + self.mL ** 2 / (2*q2)) + 3 * self.mL **2 / (2*q2) * self.FF.Hscalar(w) ** 2)
 
 
