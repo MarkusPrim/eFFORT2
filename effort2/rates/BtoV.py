@@ -102,7 +102,6 @@ class BtoV:
         if not self.cosL_min <= cosL <= self.cosL_max: return 0
         if not self.cosV_min <= cosV <= self.cosV_max: return 0
         if not self.chi_min <= chi <= self.chi_max: return 0
-        # TODO add (1 - ml^2)^2/q2 factor
 
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
