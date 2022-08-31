@@ -70,6 +70,13 @@ class BtoV:
         # self.rate_max = self.dGamma_dw_dcosL_dcosV_dchi(*self.dGamma_max())  # Add 10% on top just to be sure.
 
 
+
+    def _q2(self, w):
+        return self.mB**2 + self.mV**2 - 2 * w * self.mB * self.mV
+
+    def f(self, w):
+        return (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5 * (1 - self.mL**2/self._q2(w))**2
+
     def dGamma_dw_dcosL_dcosV_dchi(
         self, 
         w: float,
@@ -95,12 +102,12 @@ class BtoV:
         if not self.cosL_min <= cosL <= self.cosL_max: return 0
         if not self.cosV_min <= cosV <= self.cosV_max: return 0
         if not self.chi_min <= chi <= self.chi_max: return 0
-        f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
+        # TODO add (1 - ml^2)^2/q2 factor
 
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         Hzero = self.FF.Hzero(w)
-        rate_VminusA =  f(w) * self.N0 * self.Vcb ** 2 * (
+        rate_VminusA =  self.f(w) * self.N0 * self.Vcb ** 2 * (
             (1 + cosL) ** 2 * (1 - cosV ** 2) * Hminus ** 2
             - 2 * (1 - cosL ** 2) * (1 - cosV ** 2) * np.cos(2 * chi) * Hminus * Hplus
             + (1 - cosL) ** 2 * (1 - cosV ** 2) * Hplus ** 2
@@ -113,7 +120,7 @@ class BtoV:
         Hplus = -self.FF.Hminus(w)
         Hminus = -self.FF.Hplus(w)
         Hzero = -self.FF.Hzero(w)
-        rate_VplusA =  f(w) * self.N0 * self.Vcb ** 2 * (
+        rate_VplusA =  self.f(w) * self.N0 * self.Vcb ** 2 * (
             (1 + cosL) ** 2 * (1 - cosV ** 2) * Hminus ** 2
             - 2 * (1 - cosL ** 2) * (1 - cosV ** 2) * np.cos(2 * chi) * Hminus * Hplus
             + (1 - cosL) ** 2 * (1 - cosV ** 2) * Hplus ** 2
@@ -170,12 +177,10 @@ class BtoV:
         assert self.cosV_min <= cosVmin < cosVmax <= self.cosV_max
         assert self.chi_min <= chimin < chimax <= self.chi_max
 
-        f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
-
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
-        rate_VminusA = quad(lambda w: 1 / 3. * f(w) * self.N0 * self.Vcb ** 2 * (
+        rate_VminusA = quad(lambda w: 1 / 3. * self.f(w) * self.N0 * self.Vcb ** 2 * (
             - ( (chimax - chimin) * (cosLmax + cosLmax ** 2 + cosLmax ** 3 / 3 - 1 / 3. * cosLmin * (3 + cosLmin * (3 + cosLmin))) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * Hminus(w) ** 2 )
             - 1 / 3. * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
             - 1 / 3. * (chimax - chimin) * (cosLmax - cosLmin) * (3 + cosLmax ** 2 + cosLmax * (-3 + cosLmin) + (-3 + cosLmin) * cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * Hplus(w) ** 2
@@ -205,7 +210,7 @@ class BtoV:
         Hplus = lambda w: -self.FF.Hminus(w)
         Hminus = lambda w: -self.FF.Hplus(w)
         Hzero = lambda w: -self.FF.Hzero(w)
-        rate_VplusA = quad(lambda w: 1 / 3. * f(w) * self.N0 * self.Vcb ** 2 * (
+        rate_VplusA = quad(lambda w: 1 / 3. * self.f(w) * self.N0 * self.Vcb ** 2 * (
             - ( (chimax - chimin) * (cosLmax + cosLmax ** 2 + cosLmax ** 3 / 3 - 1 / 3. * cosLmin * (3 + cosLmin * (3 + cosLmin))) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * Hminus(w) ** 2 )
             - 1 / 3. * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
             - 1 / 3. * (chimax - chimin) * (cosLmax - cosLmin) * (3 + cosLmax ** 2 + cosLmax * (-3 + cosLmin) + (-3 + cosLmin) * cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * Hplus(w) ** 2
@@ -322,16 +327,15 @@ class BtoV:
             float: [description]
         """
         assert self.w_min <= w <= self.w_max
-        f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         Hzero = self.FF.Hzero(w)
-        rate_VminusA =  f(w) / 3 * self.N0 * self.Vcb ** 2 * (64 / 3. * np.pi * Hminus ** 2 + 64 / 3. * np.pi * Hplus ** 2 + 64 / 3. * np.pi * Hzero ** 2)
+        rate_VminusA =  self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (64 / 3. * np.pi * Hminus ** 2 + 64 / 3. * np.pi * Hplus ** 2 + 64 / 3. * np.pi * Hzero ** 2)
 
         Hplus = -self.FF.Hminus(w)
         Hminus = -self.FF.Hplus(w)
         Hzero = -self.FF.Hzero(w)
-        rate_VplusA =  f(w) / 3 * self.N0 * self.Vcb ** 2 * (64 / 3. * np.pi * Hminus ** 2 + 64 / 3. * np.pi * Hplus ** 2 + 64 / 3. * np.pi * Hzero ** 2)
+        rate_VplusA =  self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (64 / 3. * np.pi * Hminus ** 2 + 64 / 3. * np.pi * Hplus ** 2 + 64 / 3. * np.pi * Hzero ** 2)
 
         return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
@@ -352,12 +356,11 @@ class BtoV:
             float: [description]
         """
         assert self.cosL_min <= cosL <= self.cosL_max
-        f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
         rate_VminusA = quad(
-            lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * Hzero(w) ** 2),
+            lambda w: self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * Hzero(w) ** 2),
             self.w_min,
             self.w_max
             )[0]
@@ -366,7 +369,7 @@ class BtoV:
         Hminus = lambda w: -self.FF.Hplus(w)
         Hzero = lambda w: -self.FF.Hzero(w)   
         rate_VplusA = quad(
-            lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * Hzero(w) ** 2),
+            lambda w: self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * Hzero(w) ** 2),
             self.w_min,
             self.w_max
             )[0]
@@ -390,12 +393,11 @@ class BtoV:
             float: [description]
         """
         assert self.cosV_min <= cosV <= self.cosV_max
-        f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
         rate_VminusA = quad(
-            lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * Hzero(w) ** 2),
+            lambda w: self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * Hzero(w) ** 2),
             self.w_min,
             self.w_max
             )[0]
@@ -404,7 +406,7 @@ class BtoV:
         Hminus = lambda w: -self.FF.Hplus(w)
         Hzero = lambda w: -self.FF.Hzero(w)         
         rate_VplusA = quad(
-            lambda w: f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * Hzero(w) ** 2),
+            lambda w: self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * Hzero(w) ** 2),
             self.w_min,
             self.w_max
             )[0]
@@ -427,12 +429,11 @@ class BtoV:
             float: [description]
         """
         assert self.chi_min <= chi <= self.chi_max
-        f = lambda w: (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
         rate_VminusA =  quad(
-            lambda w: f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * Hminus(w) ** 2 - 32 * np.cos(2 * chi) * Hminus(w) * Hplus(w) + 32 * Hplus(w) ** 2 + 32 * Hzero(w) ** 2), 
+            lambda w: self.f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * Hminus(w) ** 2 - 32 * np.cos(2 * chi) * Hminus(w) * Hplus(w) + 32 * Hplus(w) ** 2 + 32 * Hzero(w) ** 2),
             self.w_min, 
             self.w_max
             )[0]
@@ -441,7 +442,7 @@ class BtoV:
         Hminus = lambda w: -self.FF.Hplus(w)
         Hzero = lambda w: -self.FF.Hzero(w)         
         rate_VplusA =  quad(
-            lambda w: f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * Hminus(w) ** 2 - 32 * np.cos(2 * chi) * Hminus(w) * Hplus(w) + 32 * Hplus(w) ** 2 + 32 * Hzero(w) ** 2), 
+            lambda w: self.f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * Hminus(w) ** 2 - 32 * np.cos(2 * chi) * Hminus(w) * Hplus(w) + 32 * Hplus(w) ** 2 + 32 * Hzero(w) ** 2),
             self.w_min, 
             self.w_max
             )[0]
