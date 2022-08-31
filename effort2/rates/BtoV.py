@@ -206,7 +206,7 @@ class BtoV:
         ), wmin, wmax)
 
 
-        # Instead of modfying the rate, we just flip the Helicity amplitude definitions
+        # Instead of modifying the rate, we just flip the Helicity amplitude definitions
         Hplus = lambda w: -self.FF.Hminus(w)
         Hminus = lambda w: -self.FF.Hplus(w)
         Hzero = lambda w: -self.FF.Hzero(w)
