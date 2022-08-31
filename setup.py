@@ -3,7 +3,7 @@ from pkg_resources import resource_filename
 from pathlib import Path
 
 
-with (Path(__file__).parent / 'readme.md').open() as readme_file:
+with (Path(__file__).parent / 'README.md').open() as readme_file:
     readme = readme_file.read()
 
 setup(
