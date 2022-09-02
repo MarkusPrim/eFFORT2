@@ -72,7 +72,8 @@ class BtoV:
 
 
     def f(self, w):
-        phase_space_factor = (1 - self.mL**2/self.kinematics.q2(w))**2 * (1 + self.mL**2 /(2 * self.kinematics.q2(w)))
+        q2 = self.kinematics.q2(w)
+        phase_space_factor = (1 - self.mL**2/q2)**2 * (1 + self.mL**2 /(2 * q2))
         return (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5 * phase_space_factor
 
     def dGamma_dw_dcosL_dcosV_dchi(
