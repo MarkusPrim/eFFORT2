@@ -36,7 +36,7 @@ class BtoV:
             Vcb (float): CKM parameter Vcb.
             m_B (float): B meson mass. It is assumed that this value will never change when handling caches.
             m_V (float): V(ector) meson mass. It is assumed that this value will never change when handling caches.
-            m_L (float): Lepton mass. Currently it only limits the kinematic phase-space, i.e. ``self.w_max`` via q²_min = m_L²,
+            m_L (float): Lepton mass. Currently it only limits the kinematic phase-space, i.e. ``self.w_max`` via q2_min = m_L^2,
                          but does not affect the differential decay width via a scalar form-factor.
             G_F (float): Effective coupling constant of the weak interaction (Fermi's constant) in units of GeV^-2. Default value from: https://pdg.lbl.gov/2020/reviews/rpp2020-rev-phys-constants.pdf.
             eta_EW (float): Electroweak corrections.
