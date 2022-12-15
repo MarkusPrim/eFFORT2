@@ -32,7 +32,8 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
 
 
     def A0(self, w: float) -> float:
-        raise RuntimeError("Not implemented. But also not required for light leptons.")
+        q2 = self.kinematics.q2(w)
+        return self.R0(w) / self.rprime * self.h_A1(w)
 
 
     def A1(self, w: float) -> float:
@@ -65,7 +66,10 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
                                             - 4 * m_B ** 2 * m_M ** 2 * (w ** 2 - 1) / (m_B + m_M) * self.A2(w))
 
 
-    def Hscalar(self) -> None:
+    def Hscalar(self, w) -> None:
+        q2 = self.kinematics.q2(w)
+        m_B = self.m_B
+        return 2 * m_B * self.kinematics.p(q2) / q2 ** 0.5 * self.A0(w)
         raise RuntimeError("Not implemented. But also not required for light leptons.")
 
 

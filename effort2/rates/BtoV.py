@@ -11,7 +11,7 @@ class BtoV:
         Vcb: float, 
         m_B: float = None, 
         m_V: float = None,
-        m_L: float = 0,
+        m_L: float = None,
         G_F: float = 1.1663787e-5,
         eta_EW: float = 1.0066,
         BR_Dstar_decay: float = 1,
@@ -21,10 +21,8 @@ class BtoV:
         """Initialize a class for calculating decay rate of B to Vector meson decays.
 
         TODO: 
-            * Full lepton mass effects.
             * Add Glebsch Gordan coefficient to differ between B+ and B0 decays.
             * Test the pre integrated rate vs numerical integration of the full rate.
-            * Refactor out MC generation into a separate class which gets initialized instead of re-implementing it for every potential rate class.
             * Implement switch to either use scipy/numpy default or enable some extra features to support propagation of uncertainties for the cost of extra run time.
 
         Nota bene:
@@ -48,7 +46,7 @@ class BtoV:
         self.Vcb = Vcb
         self.mB = FF.m_B if m_B is None else m_B
         self.mV = FF.m_V if m_V is None else m_V
-        self.mL = m_L
+        self.mL = FF.m_L if m_L is None else m_L
         self.GF = G_F
         self.eta_EW = eta_EW
         self.BR_Dstar_decay = BR_Dstar_decay

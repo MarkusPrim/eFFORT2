@@ -8,9 +8,11 @@ class BToDStarCLN(FormFactorBToDstar):
         m_B: float,
         m_V: float,
         h_A1_1: float,
-        rho2: float, 
+        rho2: float,
         R1_1: float, 
         R2_1: float,
+        m_L: float = 0,
+        R0_1: float = 0, 
         ):
         """[summary]
 
@@ -22,9 +24,10 @@ class BToDStarCLN(FormFactorBToDstar):
             R1_1 (float, optional): [description]
             R2_1 (float, optional): [description]
         """
-        super().__init__(m_B, m_V)
+        super().__init__(m_B, m_V, m_L)
         self.h_A1_1 = h_A1_1
         self.rho2 = rho2
+        self.R0_1 = R0_1
         self.R1_1 = R1_1
         self.R2_1 = R2_1
 
@@ -44,7 +47,12 @@ class BToDStarCLN(FormFactorBToDstar):
 
 
     def R0(self) -> None:
-        raise RuntimeError("Not implemented. But also not required for light leptons.")
+        """From https://arxiv.org/pdf/1203.2654.pdf
+
+        Returns:
+            _type_: _description_
+        """
+        return self.R0_1 - 0.11 * (w - 1) + 0.01 * (w - 1) ** 2
 
 
     def R1(self, w: float) -> float:
