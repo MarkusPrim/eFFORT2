@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats
 from effort2.formfactors.kinematics import Kinematics
 from effort2.math.integrate import quad
 
@@ -69,6 +70,9 @@ class BtoV:
         # self.rate_max = self.dGamma_dw_dcosL_dcosV_dchi(*self.dGamma_max())  # Add 10% on top just to be sure.
 
         self.use_PHSP = use_PHSP
+
+        # Used for MC sampling
+        self.rate_max = self.dGamma_max()
 
 
     def f(self, w):
@@ -447,64 +451,64 @@ class BtoV:
 
         return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
-    # def dGamma_max(self) -> float:
-    #     """Return the maximum of the rate.
+    def dGamma_max(self) -> float:
+        """Return the maximum of the rate.
  
-    #     This is used for the generator feature. 
+        This is used for the generator feature. 
  
-    #     Nota bene: If the parameters change (Vxb and/or the form factors, this value will also change).
+        Nota bene: If the parameters change (Vxb and/or the form factors, this value will also change).
  
-    #     Returns:
-    #         float: Maximum of the differential decay rate.
-    #     """
-    #     return scipy.optimize.fmin(
-    #         lambda x: -self.dGamma_dw_dcosL_dcosV_dchi(*x),
-    #         np.array([
-    #             (self.w_max + self.w_min) / 2,
-    #             (self.cosL_max + self.cosL_min) / 2,
-    #             (self.cosV_max + self.cosV_min) / 2,
-    #             (self.chi_max + self.chi_min) / 2
-    #             ]),
-    #         disp=False
-    #         )
+        Returns:
+            float: Maximum of the differential decay rate.
+        """
+        x_max = scipy.optimize.fmin(
+            func=lambda x: -self.dGamma_dw_dcosL_dcosV_dchi(*x),
+            x0=np.array([
+                (self.w_max + self.w_min) / 2,
+                (self.cosL_max + self.cosL_min) / 2,
+                (self.cosV_max + self.cosV_min) / 2,
+                (self.chi_max + self.chi_min) / 2
+                ]),
+            disp=False
+            )
+        return self.dGamma_dw_dcosL_dcosV_dchi(*x_max)
 
 
-    # def sample_points(self, N) -> np.array:
-    #     """Use the hit-or-miss method until a single point is found.
+    def sample_points(self, N) -> np.array:
+        """Use the hit-or-miss method until a single point is found.
  
-    #     Args:
-    #         N (int): Sampling size to make efficient use of the random number generator.
+        Args:
+            N (int): Sampling size to make efficient use of the random number generator.
  
-    #     Returns:
-    #         list: Returns a set of random points (w, cosL, cosV, chi). The length of the array is non-deterministic (generator efficiency * sampling size).
-    #     """
-    #     x = np.array([
-    #         scipy.stats.uniform.rvs(self.w_min, self.w_max - self.w_min, size=N),
-    #         scipy.stats.uniform.rvs(self.cosL_min, self.cosL_max - self.cosL_min, size=N),
-    #         scipy.stats.uniform.rvs(self.cosV_min, self.cosV_max - self.cosV_min, size=N),
-    #         scipy.stats.uniform.rvs(self.chi_min, self.chi_max - self.chi_min, size=N)
-    #     ]).transpose()
+        Returns:
+            list: Returns a set of random points (w, cosL, cosV, chi). The length of the array is non-deterministic (generator efficiency * sampling size).
+        """
+        x = np.array([
+            scipy.stats.uniform.rvs(self.w_min, self.w_max - self.w_min, size=N),
+            scipy.stats.uniform.rvs(self.cosL_min, self.cosL_max - self.cosL_min, size=N),
+            scipy.stats.uniform.rvs(self.cosV_min, self.cosV_max - self.cosV_min, size=N),
+            scipy.stats.uniform.rvs(self.chi_min, self.chi_max - self.chi_min, size=N)
+        ]).transpose()
+        f = scipy.stats.uniform.rvs(0, self.rate_max, size=N)
+        return [(*_x, _f) for _x, _f in zip(x, f) if self.dGamma_dw_dcosL_dcosV_dchi(*_x) > _f]
  
-    #     f = scipy.stats.uniform.rvs(0, self.rate_max, size=N)
-    #     return [(*_x, _f) for _x, _f in zip(x, f) if self.dGamma_dw_dcosL_dcosV_dchi(*_x) > _f]
  
+    def generate_events(self, N):
+        """Generate the requested number of events.
  
-    # def generate_events(self, N):
-    #     """Generate the requested number of events.
+        The efficiency of the hit-or.miss method is roughly 25%. To make efficient use of the random number generator of scipy, we over-sample by a factor of 5.
+        This way we should usually be able to generate the requested number of events in one go.
  
-    #     The efficiency of the hit-or.miss method is roughly 25%. To make efficient use of the random number generator of scipy, we over-sample by a factor of 5.
-    #     This way we should usually be able to generate the requested number of events in one go.
+        Args:
+            N (int): Number of events to be generated.
  
-    #     Args:
-    #         N (int): Number of events to be generated.
- 
-    #     Returns:
-    #         np.array: Array of random data points (w, cosL, cosV, chi) drawn from the differentical decay rate.
-    #     """
-    #     events = []
-    #     while len(events) < N:
-    #         events += self.sample_points(N*5)
-    #     return np.array(events[:N])
+        Returns:
+            np.array: Array of random data points (w, cosL, cosV, chi) drawn from the differentical decay rate.
+        """
+        events = []
+        while len(events) < N:
+            events += self.sample_points(N*5)
+        return np.array(events[:N])
 
 
 if __name__ == "__main__":
