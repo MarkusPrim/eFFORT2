@@ -16,7 +16,8 @@ class BtoV:
         eta_EW: float = 1.0066,
         BR_Dstar_decay: float = 1,
         VminusA: float = 1,
-        VplusA: float = 0
+        VplusA: float = 0,
+        use_PHSP: bool = True,
         ):
         """Initialize a class for calculating decay rate of B to Vector meson decays.
 
@@ -67,11 +68,12 @@ class BtoV:
         # These are required for the generator feature.
         # self.rate_max = self.dGamma_dw_dcosL_dcosV_dchi(*self.dGamma_max())  # Add 10% on top just to be sure.
 
+        self.use_PHSP = use_PHSP
 
 
     def f(self, w):
         q2 = self.kinematics.q2(w)
-        phase_space_factor = (1 - self.mL**2/q2)**2 * (1 + self.mL**2 /(2 * q2))
+        phase_space_factor = (1 - self.mL**2/q2)**2 * (1 + self.mL**2 /(2 * q2)) if self.use_PHSP else 1
         return (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5 * phase_space_factor
 
     def dGamma_dw_dcosL_dcosV_dchi(
