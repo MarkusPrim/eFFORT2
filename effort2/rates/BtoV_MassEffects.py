@@ -188,7 +188,7 @@ class BtoV:
                 -3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3
             ) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * np.real(np.conjugate(Hminus(w)) * Hplus(w))
             - 2. / 3. * (chimax - chimin) * (cosLmax - cosLmin) * (cosLmax + cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (Hminus(w) ** 2 - Hplus(w) ** 2)
-            - 2. / 9. * (chimax - chimin) * (3 * cosLmax + cosLmax ** 3 - cosLmin * (3 + cosLmin ** 2)) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) ** (Hminus(w) ** 2 + Hplus(w) ** 2)
+            - 2. / 9. * (chimax - chimin) * (3 * cosLmax + cosLmax ** 3 - cosLmin * (3 + cosLmin ** 2)) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (Hminus(w) ** 2 + Hplus(w) ** 2)
             - 8. / 9. * (chimax - chimin) * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * Hzero(w) ** 2
             # Terms with mL
             + 8. / (3 * q2(w)) * (
