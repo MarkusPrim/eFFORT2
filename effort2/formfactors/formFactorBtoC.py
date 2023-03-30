@@ -70,7 +70,6 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
         q2 = self.kinematics.q2(w)
         m_B = self.m_B
         return 2 * m_B * self.kinematics.p(q2) / q2 ** 0.5 * self.A0(w)
-        raise RuntimeError("Not implemented. But also not required for light leptons.")
 
 
     @abc.abstractmethod
@@ -80,6 +79,7 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
 
     @abc.abstractmethod
     def R0(self, w: float) -> float:
+        return 0
         raise RuntimeError("Not implemented. But also not required for light leptons.")
 
 

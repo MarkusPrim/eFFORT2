@@ -2,6 +2,7 @@ import numpy as np
 import scipy.stats
 from effort2.formfactors.kinematics import Kinematics
 from effort2.math.integrate import quad
+import uncertainties.unumpy as unp
 
 
 class BtoV:
@@ -36,9 +37,9 @@ class BtoV:
             Vcb (float): CKM parameter Vcb.
             m_B (float): B meson mass. It is assumed that this value will never change when handling caches.
             m_V (float): V(ector) meson mass. It is assumed that this value will never change when handling caches.
-            m_L (float): Lepton mass. Currently it only limits the kinematic phase-space, i.e. ``self.w_max`` via q2_min = m_L^2,
+            m_L (float): Lepton mass. Currently it only limits the kinematic phase-space, i.e. ``self.w_max`` via q2_min = m_L ** 2,
                          but does not affect the differential decay width via a scalar form-factor.
-            G_F (float): Effective coupling constant of the weak interaction (Fermi's constant) in units of GeV^-2. Default value from: https://pdg.lbl.gov/2020/reviews/rpp2020-rev-phys-constants.pdf.
+            G_F (float): Effective coupling constant of the weak interaction (Fermi's constant) in units of GeV ** -2. Default value from: https://pdg.lbl.gov/2020/reviews/rpp2020-rev-phys-constants.pdf.
             eta_EW (float): Electroweak corrections.
             BR_Dstar_decay (float, optional): In case the D* meson decay is not treated fully inclusive (BR < 1). It is assumed that this value will never change when handling caches.
         """
@@ -59,26 +60,32 @@ class BtoV:
         self.cosL_min, self.cosL_max = self.kinematics.cosL_range
         self.cosV_min, self.cosV_max = self.kinematics.cosV_range
         self.chi_min, self.chi_max = self.kinematics.chi_range
-        
-        # These are constant factors which turn up in each rate calculation. Let us do it once and cache the result.
-        self.r = self.mV / self.mB 
-        self.N0 = 6 * self.mB * self.mV ** 2 / 8 / (4*np.pi) ** 4 * self.GF ** 2 * self.eta_EW ** 2 * self.BR_Dstar_decay #* 1e10
+                
+        self.N0 = self.BR_Dstar_decay * self.GF ** 2 / (2*np.pi) ** 4 * self.eta_EW ** 2 / 12 / self.mB ** 2 
+        self.N0 *= (2 * self.mB * self.mV)  # Differential dq2/dw 
+
+        # Helper variable to work with angular coefficients
+        self.xi = self.GF ** 2 * self.mB ** 3 / 2 / np.pi ** 4 * self.eta_EW ** 2 * self.BR_Dstar_decay 
 
         self.VminusA = VminusA
         self.VplusA = VplusA
         # These are required for the generator feature.
         # self.rate_max = self.dGamma_dw_dcosL_dcosV_dchi(*self.dGamma_max())  # Add 10% on top just to be sure.
 
-        self.use_PHSP = use_PHSP
-
         # Used for MC sampling
-        self.rate_max = self.dGamma_max()
+        # self.rate_max = unp.nominal_values(self.dGamma_max())
+
+        # Sign conventions, do not change.
+        self.sign_alpha = +1
+        self.sign_beta  = +1
 
 
     def f(self, w):
         q2 = self.kinematics.q2(w)
-        phase_space_factor = (1 - self.mL**2/q2)**2 * (1 + self.mL**2 /(2 * q2)) if self.use_PHSP else 1
-        return (1 - 2 * w * self.r + self.r ** 2) * (w ** 2 - 1) ** 0.5 * phase_space_factor
+        p = self.kinematics.p(q2)
+        mL = self.mL
+        return (q2 - mL ** 2) ** 2 * p / q2
+
 
     def dGamma_dw_dcosL_dcosV_dchi(
         self, 
@@ -106,32 +113,38 @@ class BtoV:
         if not self.cosV_min <= cosV <= self.cosV_max: return 0
         if not self.chi_min <= chi <= self.chi_max: return 0
 
+        mL = self.mL
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         Hzero = self.FF.Hzero(w)
-        rate_VminusA =  self.f(w) * self.N0 * self.Vcb ** 2 * (
-            (1 + cosL) ** 2 * (1 - cosV ** 2) * Hminus ** 2
-            - 2 * (1 - cosL ** 2) * (1 - cosV ** 2) * np.cos(2 * chi) * Hminus * Hplus
-            + (1 - cosL) ** 2 * (1 - cosV ** 2) * Hplus ** 2
-            + 4 * (1 + cosL) * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * Hminus * Hzero
-            - 4 * (1 - cosL) * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * Hplus * Hzero
-            + 4 * (1 - cosL ** 2) * cosV ** 2 * Hzero ** 2
-        )
+        Hscalar = self.FF.Hscalar(w)
 
-        # Instead of modfying the rate, we just flip the Helicity amplitude definitions
-        Hplus = -self.FF.Hminus(w)
-        Hminus = -self.FF.Hplus(w)
-        Hzero = -self.FF.Hzero(w)
-        rate_VplusA =  self.f(w) * self.N0 * self.Vcb ** 2 * (
-            (1 + cosL) ** 2 * (1 - cosV ** 2) * Hminus ** 2
-            - 2 * (1 - cosL ** 2) * (1 - cosV ** 2) * np.cos(2 * chi) * Hminus * Hplus
-            + (1 - cosL) ** 2 * (1 - cosV ** 2) * Hplus ** 2
-            + 4 * (1 + cosL) * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * Hminus * Hzero
-            - 4 * (1 - cosL) * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * Hplus * Hzero
-            + 4 * (1 - cosL ** 2) * cosV ** 2 * Hzero ** 2
+        alpha = self.sign_alpha
+        beta = self.sign_beta
+        
+        rate_VminusA = 9 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+            -(-1 + cosV ** 2) * (1 + cosL ** 2 + 2 * cosL * alpha) * Hminus ** 2
+            -(-1 + cosV ** 2) * (1 + cosL ** 2 - 2 * cosL * alpha) * Hplus ** 2
+            -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * (-cosL + beta) * np.cos(chi) * Hplus * Hzero
+            -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * (-cosL - beta) * np.cos(chi) * Hminus * Hzero
+            -4 * (-1 + cosL ** 2) * cosV ** 2 * Hzero ** 2
+            -2 * (-1 + cosL ** 2) * (-1 + cosV ** 2) * np.cos(2 * chi) * Hplus * Hminus
+            + mL ** 2 / self.kinematics.q2(w) * (  # TODO: Implementation needs to be checked against physics
+#                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * Hminus ** 2 
+#                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * Hplus ** 2
+#                -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * Hplus * (cosL * Hzero - Hscalar)
+#                +4 * cosV ** 2 * (-cosL * Hzero + Hscalar) ** 2
+#                + Hminus * (
+#            (-1 + cosL ** 2) * (-1 + cosV ** 2) * np.cos(2 * chi) * Hplus 
+#            + 4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * (-cosL * Hzero + Hscalar))
+            ) 
         )
-
-        return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
+        
+        return self.VminusA * rate_VminusA
+        # Hplus = -self.FF.Hminus(w)
+        # Hminus = -self.FF.Hplus(w)
+        # Hzero = -self.FF.Hzero(w)
+        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
 
     def DGamma_Dw_DcosL_DcosV_Dchi(
@@ -179,277 +192,128 @@ class BtoV:
         assert self.cosV_min <= cosVmin < cosVmax <= self.cosV_max
         assert self.chi_min <= chimin < chimax <= self.chi_max
 
+        mL = self.mL
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
-        rate_VminusA = quad(lambda w: 1 / 3. * self.f(w) * self.N0 * self.Vcb ** 2 * (
-            - ( (chimax - chimin) * (cosLmax + cosLmax ** 2 + cosLmax ** 3 / 3 - 1 / 3. * cosLmin * (3 + cosLmin * (3 + cosLmin))) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * Hminus(w) ** 2 )
-            - 1 / 3. * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
-            - 1 / 3. * (chimax - chimin) * (cosLmax - cosLmin) * (3 + cosLmax ** 2 + cosLmax * (-3 + cosLmin) + (-3 + cosLmin) * cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * Hplus(w) ** 2
-            + 2 / 3. * (-(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5) 
-                * (-2 * (1 - cosLmax ** 2) ** 0.5 
-                    + 3 * cosLmax * (1 - cosLmax ** 2) ** 0.5
-                    + 2 * cosLmax ** 2 * (1 - cosLmax ** 2) ** 0.5 
-                    + 2 * (1 - cosLmin ** 2) ** 0.5 
-                    - 3 * cosLmin * (1 - cosLmin ** 2) ** 0.5
-                    - 2 * cosLmin ** 2 * (1 - cosLmin ** 2) ** 0.5
-                    + 3 * np.arcsin(cosLmax)
-                    - 3 * np.arcsin(cosLmin)
-                ) * (np.sin(chimax) - np.sin(chimin)) * Hminus(w) * Hzero(w)
-            + 2 / 3. * (-(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5)
-                * (-2 * (1 - cosLmax ** 2) ** 0.5
-                    + cosLmax * (-3 + 2 * cosLmax) * (1 - cosLmax ** 2) ** 0.5
-                    + 2 * (1 - cosLmin ** 2) ** 0.5
-                    + (3 - 2 * cosLmin) * cosLmin * (1 - cosLmin ** 2) ** 0.5
-                    - 3 * np.arcsin(cosLmax)
-                    + 3 * np.arcsin(cosLmin)
-                ) * (np.sin(chimax) - np.sin(chimin)) * Hplus(w) * Hzero(w)
-            - 4 / 3. * (chimax - chimin) * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * Hzero(w) ** 2
-        ), wmin, wmax)
+
+        alpha = self.sign_alpha
+        beta = self.sign_beta
+
+        rate_VminusA = quad(lambda w: -1 / 64 * self.f(w) * self.N0 * self.Vcb ** 2 *  (
+            +2 * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
+            +6 * (chimax - chimin) * (cosLmax - cosLmin) * (cosLmax + cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * alpha * (Hminus(w) ** 2 - Hplus(w) ** 2)
+            -2 * (chimax - chimin) * (3 * cosLmax + cosLmax ** 3 - cosLmin * (3 + cosLmin ** 2)) * (3 * cosVmax - cosVmax ** 3 - 3 * cosVmin + cosVmin ** 3) * (Hminus(w) ** 2 + Hplus(w) ** 2)
+            +12 * (
+                -(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5
+                ) * beta * (
+                    -cosLmax * (1 - cosLmax ** 2) ** 0.5 + cosLmin * (1 - cosLmin ** 2) ** 0.5 + np.arcsin(-cosLmax) - np.arcsin(-cosLmin)
+                    ) * (np.sin(chimax) - np.sin(chimin)) * (Hminus(w) - Hplus(w)) * Hzero(w)
+            -8 * (
+                -(1 - cosLmax ** 2) ** 0.5 + cosLmax ** 2 * (1 - cosLmax ** 2) ** 0.5 + (1 - cosLmin ** 2) ** 0.5 - cosLmin ** 2 * (1 - cosLmin ** 2) ** 0.5
+                ) * (
+                    -(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5
+                    ) * (np.sin(chimax) - np.sin(chimin)) * (Hminus(w) + Hplus(w)) * Hzero(w)
+            -8 * (chimax - chimin) * (3 * cosLmax - cosLmax ** 3 - 3 * cosLmin + cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * Hzero(w) ** 2
+            + mL ** 2 / self.kinematics.q2(w) * (
+                0 # TODO
+            ) 
+        ), wmin, wmax)[0]
 
 
-        # Instead of modifying the rate, we just flip the Helicity amplitude definitions
-        Hplus = lambda w: -self.FF.Hminus(w)
-        Hminus = lambda w: -self.FF.Hplus(w)
-        Hzero = lambda w: -self.FF.Hzero(w)
-        rate_VplusA = quad(lambda w: 1 / 3. * self.f(w) * self.N0 * self.Vcb ** 2 * (
-            - ( (chimax - chimin) * (cosLmax + cosLmax ** 2 + cosLmax ** 3 / 3 - 1 / 3. * cosLmin * (3 + cosLmin * (3 + cosLmin))) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * Hminus(w) ** 2 )
-            - 1 / 3. * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
-            - 1 / 3. * (chimax - chimin) * (cosLmax - cosLmin) * (3 + cosLmax ** 2 + cosLmax * (-3 + cosLmin) + (-3 + cosLmin) * cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * Hplus(w) ** 2
-            + 2 / 3. * (-(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5) 
-                * (-2 * (1 - cosLmax ** 2) ** 0.5 
-                    + 3 * cosLmax * (1 - cosLmax ** 2) ** 0.5
-                    + 2 * cosLmax ** 2 * (1 - cosLmax ** 2) ** 0.5 
-                    + 2 * (1 - cosLmin ** 2) ** 0.5 
-                    - 3 * cosLmin * (1 - cosLmin ** 2) ** 0.5
-                    - 2 * cosLmin ** 2 * (1 - cosLmin ** 2) ** 0.5
-                    + 3 * np.arcsin(cosLmax)
-                    - 3 * np.arcsin(cosLmin)
-                ) * (np.sin(chimax) - np.sin(chimin)) * Hminus(w) * Hzero(w)
-            + 2 / 3. * (-(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5)
-                * (-2 * (1 - cosLmax ** 2) ** 0.5
-                    + cosLmax * (-3 + 2 * cosLmax) * (1 - cosLmax ** 2) ** 0.5
-                    + 2 * (1 - cosLmin ** 2) ** 0.5
-                    + (3 - 2 * cosLmin) * cosLmin * (1 - cosLmin ** 2) ** 0.5
-                    - 3 * np.arcsin(cosLmax)
-                    + 3 * np.arcsin(cosLmin)
-                ) * (np.sin(chimax) - np.sin(chimin)) * Hplus(w) * Hzero(w)
-            - 4 / 3. * (chimax - chimin) * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * Hzero(w) ** 2
-        ), wmin, wmax)
-
-        return self.VminusA * rate_VminusA[0] + self.VplusA * rate_VplusA[0]
+        return self.VminusA * rate_VminusA
+        # return self.VminusA * rate_VminusA[0] + self.VplusA * rate_VplusA[0]
 
 
     def Gamma(self) -> float:
-        """[summary]
-
-        Returns:
-            float: [description]
-        """
         return self.DGamma_Dw_DcosL_DcosV_Dchi(self.w_min, self.w_max, self.cosL_min, self.cosL_max, self.cosV_min, self.cosV_max, self.chi_min, self.chi_max)
 
 
     def DGamma_Dw(self, wmin: float, wmax: float) -> float:
-        """[summary]
-
-        Recommended use cases:
-            * Fitting.
-
-        Args:
-            wmin (float): [description]
-            wmax (float): [description]
-
-        Returns:
-            float: [description]
-        """
         return self.DGamma_Dw_DcosL_DcosV_Dchi(wmin, wmax, self.cosL_min, self.cosL_max, self.cosV_min, self.cosV_max, self.chi_min, self.chi_max)
 
 
     def DGamma_DcosL(self, cosLmin: float, cosLmax: float) -> float:
-        """[summary]
-
-        Recommended use cases:
-            * Fitting.
-
-        Args:
-            cosLmin (float): [description]
-            cosLmax (float): [description]
-
-        Returns:
-            float: [description]
-        """
         return self.DGamma_Dw_DcosL_DcosV_Dchi(self.w_min, self.w_max, cosLmin, cosLmax, self.cosV_min, self.cosV_max, self.chi_min, self.chi_max)
 
 
     def DGamma_DcosV(self, cosVmin: float, cosVmax: float) -> float:
-        """[summary]
-
-        Recommended use cases:
-            * Fitting.
-
-        Args:
-            cosVmin (float): [description]
-            cosVmax (float): [description]
-
-        Returns:
-            float: [description]
-        """
         return self.DGamma_Dw_DcosL_DcosV_Dchi(self.w_min, self.w_max, self.cosL_min, self.cosL_max, cosVmin, cosVmax, self.chi_min, self.chi_max)
 
 
     def DGamma_Dchi(self, chimin: float, chimax: float) -> float:
-        """[summary]
-        
-        Recommended use cases:
-            * Fitting.
-
-        Args:
-            chimin (float): [description]
-            chimax (float): [description]
-
-        Returns:
-            float: [description]
-        """
         return self.DGamma_Dw_DcosL_DcosV_Dchi(self.w_min, self.w_max, self.cosL_min, self.cosL_max, self.cosV_min, self.cosV_max, chimin, chimax)
 
 
     def dGamma_dw(self, w: float) -> float:
-        """[summary]
-
-        Nota bene:
-            * Not fully generalized (yet), cosL, cosV and chi are integrated over the full range.
-
-        Recommended use cases:
-            * Plotting.
-
-        Args:
-            w (float): [description]
-
-        Returns:
-            float: [description]
-        """
         assert self.w_min <= w <= self.w_max
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         Hzero = self.FF.Hzero(w)
-        rate_VminusA =  self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (64 / 3. * np.pi * Hminus ** 2 + 64 / 3. * np.pi * Hplus ** 2 + 64 / 3. * np.pi * Hzero ** 2)
+        rate_VminusA =  -3 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+            - 64 / 3 * np.pi * Hminus ** 2 
+            - 64 / 3 * np.pi * Hplus ** 2 
+            - 64 / 3 * np.pi * Hzero ** 2
+            )
 
-        Hplus = -self.FF.Hminus(w)
-        Hminus = -self.FF.Hplus(w)
-        Hzero = -self.FF.Hzero(w)
-        rate_VplusA =  self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (64 / 3. * np.pi * Hminus ** 2 + 64 / 3. * np.pi * Hplus ** 2 + 64 / 3. * np.pi * Hzero ** 2)
-
-        return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
+        return self.VminusA * rate_VminusA
+        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
 
     def dGamma_dcosL(self, cosL: float) -> float:
-        """[summary]
-
-        Nota bene:
-            * Not fully generalized (yet), w, cosV and chi are integrated over the full range.
-
-        Recommended use cases:
-            * Plotting.
-
-        Args:
-            cosL (float): [description]
-
-        Returns:
-            float: [description]
-        """
         assert self.cosL_min <= cosL <= self.cosL_max
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
+        alpha = self.sign_alpha
+
         rate_VminusA = quad(
-            lambda w: self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * Hzero(w) ** 2),
-            self.w_min,
-            self.w_max
-            )[0]
+            lambda w: -3 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+                - 8 * np.pi * (1 + cosL ** 2 + 2 * cosL * alpha) * Hminus(w) ** 2 
+                - 8 * np.pi * (1 + cosL ** 2 - 2 * cosL * alpha) * Hplus(w) ** 2 
+                + 16 * np.pi * (-1 + cosL ** 2) * Hzero(w) ** 2
+                ), self.w_min, self.w_max
+                )[0]
 
-        Hplus = lambda w: -self.FF.Hminus(w)
-        Hminus = lambda w: -self.FF.Hplus(w)
-        Hzero = lambda w: -self.FF.Hzero(w)   
-        rate_VplusA = quad(
-            lambda w: self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (8 * (1 + cosL) ** 2 * np.pi * Hminus(w) ** 2 + 8 * (-1 + cosL) ** 2 * np.pi * Hplus(w) ** 2 - 16 * (-1 + cosL ** 2) * np.pi * Hzero(w) ** 2),
-            self.w_min,
-            self.w_max
-            )[0]
-
-        return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
+        return self.VminusA * rate_VminusA
+        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
 
     def dGamma_dcosV(self, cosV: float) -> float:
-        """[summary]
-
-        Nota bene:
-            * Not fully generalized (yet), w, cosL and chi are integrated over the full range.
-
-        Recommended use cases:
-            * Plotting.
-
-        Args:
-            cosV (float): [description]
-
-        Returns:
-            float: [description]
-        """
         assert self.cosV_min <= cosV <= self.cosV_max
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
+
         rate_VminusA = quad(
-            lambda w: self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * Hzero(w) ** 2),
-            self.w_min,
-            self.w_max
-            )[0]
+            lambda w: -3 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+                + 16 * np.pi * (-1 + cosV ** 2) * Hminus(w) ** 2 
+                + 16 * np.pi * (-1 + cosV ** 2) * Hplus(w) ** 2 
+                - 32 * np.pi * cosV ** 2 * Hzero(w) ** 2
+                ),self.w_min, self.w_max
+                )[0]
 
-        Hplus = lambda w: -self.FF.Hminus(w)
-        Hminus = lambda w: -self.FF.Hplus(w)
-        Hzero = lambda w: -self.FF.Hzero(w)         
-        rate_VplusA = quad(
-            lambda w: self.f(w) / 3 * self.N0 * self.Vcb ** 2 * (-16 * (-1 + cosV ** 2) * np.pi * Hminus(w) ** 2 - 16 * (-1 + cosV ** 2) * np.pi * Hplus(w) ** 2 + 32 * cosV ** 2 * np.pi * Hzero(w) ** 2),
-            self.w_min,
-            self.w_max
-            )[0]
+        return self.VminusA * rate_VminusA
+        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
-        return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
     def dGamma_dchi(self, chi: float) -> float:
-        """[summary]
-
-        Nota bene:
-            * Not fully generalized (yet), w, cosL and cosV are integrated over the full range.
-
-        Recommended use cases:
-            * Plotting.
-
-        Args:
-            cosL (float): [description]
-
-        Returns:
-            float: [description]
-        """
         assert self.chi_min <= chi <= self.chi_max
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
         rate_VminusA =  quad(
-            lambda w: self.f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * Hminus(w) ** 2 - 32 * np.cos(2 * chi) * Hminus(w) * Hplus(w) + 32 * Hplus(w) ** 2 + 32 * Hzero(w) ** 2),
-            self.w_min, 
-            self.w_max
-            )[0]
+            lambda w: -1 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+                - 32 * Hminus(w) ** 2 
+                + 32 * np.cos(2 * chi) * Hminus(w) * Hplus(w) 
+                - 32 * Hplus(w) ** 2 
+                - 32 * Hzero(w) ** 2
+                ), self.w_min, self.w_max
+                )[0]
 
-        Hplus = lambda w: -self.FF.Hminus(w)
-        Hminus = lambda w: -self.FF.Hplus(w)
-        Hzero = lambda w: -self.FF.Hzero(w)         
-        rate_VplusA =  quad(
-            lambda w: self.f(w) / 9 * self.N0 * self.Vcb ** 2 * (32 * Hminus(w) ** 2 - 32 * np.cos(2 * chi) * Hminus(w) * Hplus(w) + 32 * Hplus(w) ** 2 + 32 * Hzero(w) ** 2),
-            self.w_min, 
-            self.w_max
-            )[0]
+        return self.VminusA * rate_VminusA
+        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
-        return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
     def dGamma_max(self) -> float:
         """Return the maximum of the rate.
