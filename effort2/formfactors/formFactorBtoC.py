@@ -79,8 +79,7 @@ for $B \to P \ell \nu_\ell$ and $B \to V \ell \nu_\ell$ decays, where P stands f
 
     @abc.abstractmethod
     def R0(self, w: float) -> float:
-        return 0
-        raise RuntimeError("Not implemented. But also not required for light leptons.")
+        pass
 
 
     @abc.abstractmethod

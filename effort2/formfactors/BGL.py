@@ -80,7 +80,7 @@ class BToDStarBGL(FormFactorBToDstar):
 
 
     def R0(self) -> None:
-        raise RuntimeError("Not implemented. But also not required for light leptons.")
+        return 0  # Not implemented. But also not required for light leptons.
 
 
     def R1(self, w):

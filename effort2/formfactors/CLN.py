@@ -46,7 +46,7 @@ class BToDStarCLN(FormFactorBToDstar):
         return self.h_A1_1 * (1 - 8 * rho2 * z + (53 * rho2 - 15) * z ** 2 - (231 * rho2 - 91) * z ** 3)
 
 
-    def R0(self) -> None:
+    def R0(self, w) -> None:
         """From https://arxiv.org/pdf/1203.2654.pdf
 
         Returns:
