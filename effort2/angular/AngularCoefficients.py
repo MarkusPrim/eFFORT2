@@ -127,3 +127,7 @@ class AngularCoefficientsDgamma:
             FF (None): Form factor class which has to provide the helicity amplitudes.
         """
         self.FF = FF
+
+
+if __name__ == "__main__":
+    pass
