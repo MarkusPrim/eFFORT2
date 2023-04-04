@@ -32,41 +32,41 @@ class AngularCoefficientsDpi:
         return (2 / self.FF.m_B ** 3) * (3 * self.FF.kinematics.p(q2)) / (128 * 2 ** 4 * self.FF.m_B ** 2)
 
 
-    def J_1s(self, q2):
+    def J1s(self, q2):
         w = self.FF.kinematics.w(q2)
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         return self.F(q2) * (0.5 * (Hplus ** 2 + Hminus ** 2) * (self.FF.m_L ** 2 + 3 * q2))
 
 
-    def J_1c(self, q2):
+    def J1c(self, q2):
         w = self.FF.kinematics.w(q2)
         Hzero = self.FF.Hzero(w)
         Hscalar = 0
         return self.F(q2) * (2 * (2 * self.FF.m_L ** 2 * Hscalar ** 2 + Hzero ** 2 * (self.FF.m_L ** 2 + q2)))
 
 
-    def J_2s(self, q2):
+    def J2s(self, q2):
         w = self.FF.kinematics.w(q2)
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         return self.F(q2) * (0.5 * (Hplus ** 2 + Hminus ** 2) * (q2 - self.FF.m_L ** 2))
 
 
-    def J_2c(self, q2):
+    def J2c(self, q2):
         w = self.FF.kinematics.w(q2)
         Hzero = self.FF.Hzero(w)
         return self.F(q2) * (2 * Hzero ** 2 * (self.FF.m_L ** 2 - q2))
 
 
-    def J_3(self, q2):
+    def J3(self, q2):
         w = self.FF.kinematics.w(q2)
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         return self.F(q2) * (2 * Hplus * Hminus * (self.FF.m_L ** 2 - q2))
 
 
-    def J_4(self, q2):
+    def J4(self, q2):
         w = self.FF.kinematics.w(q2)
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
@@ -74,7 +74,7 @@ class AngularCoefficientsDpi:
         return -self.F(q2) * (Hzero * (Hplus + Hminus) * (self.FF.m_L ** 2 - q2))
 
 
-    def J_5(self, q2):
+    def J5(self, q2):
         w = self.FF.kinematics.w(q2)
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
@@ -83,14 +83,14 @@ class AngularCoefficientsDpi:
         return self.F(q2) * (-2 * (Hplus + Hminus) * Hscalar * self.FF.m_L ** 2 - 2 * Hzero * (Hplus - Hminus) * q2)
 
 
-    def J_6s(self, q2):
+    def J6s(self, q2):
         w = self.FF.kinematics.w(q2)
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         return -self.F(q2) * (2 * (Hplus ** 2 - Hminus ** 2) * q2)
 
 
-    def J_6c(self, q2):
+    def J6c(self, q2):
         w = self.FF.kinematics.w(q2)
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
@@ -99,15 +99,17 @@ class AngularCoefficientsDpi:
         return -self.F(q2) * (-8 * Hzero * Hscalar * self.FF.m_L ** 2)
 
 
-    def J_7(self, q2):
+    def J7(self, q2):
         return self.F(q2) * (0)
 
 
-    def J_8(self, q2):
+    def J8(self, q2):
+        return 0
         raise NotImplemented
 
 
-    def J_9(self, q2):
+    def J9(self, q2):
+        return 0
         raise NotImplemented
 
 
