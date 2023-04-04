@@ -129,7 +129,7 @@ class BtoV:
             -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * (-cosL - beta) * np.cos(chi) * Hminus * Hzero
             -4 * (-1 + cosL ** 2) * cosV ** 2 * Hzero ** 2
             -2 * (-1 + cosL ** 2) * (-1 + cosV ** 2) * np.cos(2 * chi) * Hplus * Hminus
-            + mL ** 2 / self.kinematics.q2(w) * (  # TODO: Implementation needs to be checked against physics
+            + mL ** 2 / self.kinematics.q2(w) #* (  # TODO: Implementation needs to be checked against physics
 #                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * Hminus ** 2 
 #                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * Hplus ** 2
 #                -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * Hplus * (cosL * Hzero - Hscalar)
@@ -137,7 +137,7 @@ class BtoV:
 #                + Hminus * (
 #            (-1 + cosL ** 2) * (-1 + cosV ** 2) * np.cos(2 * chi) * Hplus 
 #            + 4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * (-cosL * Hzero + Hscalar))
-            ) 
+#            ) 
         )
         
         return self.VminusA * rate_VminusA
