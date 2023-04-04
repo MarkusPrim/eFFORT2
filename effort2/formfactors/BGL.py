@@ -79,7 +79,7 @@ class BToDStarBGL(FormFactorBToDstar):
         return self.f(z) / (self.m_B * self.m_V) ** 0.5 / (1 + w)
 
 
-    def R0(self) -> None:
+    def R0(self, w) -> None:
         return 0  # Not implemented. But also not required for light leptons.
 
 
