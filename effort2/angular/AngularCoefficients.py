@@ -1,5 +1,7 @@
 from effort2.math.integrate import quad
 
+import numpy as np
+
 
 class AngularCoefficientsDpi:
 
@@ -26,6 +28,17 @@ class AngularCoefficientsDpi:
         q2min = self.FF.kinematics.q2(wmax)
         q2max = self.FF.kinematics.q2(wmin)
         return quad(J, q2min, q2max)[0]
+
+
+    def Norm(self):
+        wmin = self.FF.kinematics.w_min
+        wmax = self.FF.kinematics.w_max
+        return 8 / 9 * np.pi * (
+            3 * self.DJ_Dw(self.J1c, wmin, wmax) 
+            + 6 * self.DJ_Dw(self.J1s, wmin, wmax) 
+            - self.DJ_Dw(self.J2c, wmin, wmax) 
+            - 2 * self.DJ_Dw(self.J2s, wmin, wmax)
+            )
 
 
     def F(self, q2):
@@ -92,10 +105,8 @@ class AngularCoefficientsDpi:
 
     def J6c(self, q2):
         w = self.FF.kinematics.w(q2)
-        Hplus = self.FF.Hplus(w)
-        Hminus = self.FF.Hminus(w)
         Hzero = self.FF.Hzero(w)
-        Hscalar = 0
+        Hscalar = self.FF.Hscalar(w)
         return -self.F(q2) * (-8 * Hzero * Hscalar * self.FF.m_L ** 2)
 
 

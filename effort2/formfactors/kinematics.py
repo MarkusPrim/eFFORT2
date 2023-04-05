@@ -35,6 +35,9 @@ class Kinematics:
         self.chi_max = 2*np.pi
         self.chi_range = self.chi_min, self.chi_max        
 
+        self.q2_min = self.q2(self.w_max)
+        self.q2_max = self.q2(self.w_min)
+
     
     def p(self, q2):
         return np.sqrt( ( (self.m_B**2 + self.m_M**2 - q2)/(2*self.m_B) )**2 - self.m_M**2 )
