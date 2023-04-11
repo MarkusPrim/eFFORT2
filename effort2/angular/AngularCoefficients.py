@@ -55,7 +55,7 @@ class AngularCoefficientsDpi:
     def J1c(self, q2):
         w = self.FF.kinematics.w(q2)
         Hzero = self.FF.Hzero(w)
-        Hscalar = 0
+        Hscalar = self.FF.Hscalar(w)
         return self.F(q2) * (2 * (2 * self.FF.m_L ** 2 * Hscalar ** 2 + Hzero ** 2 * (self.FF.m_L ** 2 + q2)))
 
 
@@ -92,7 +92,7 @@ class AngularCoefficientsDpi:
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         Hzero = self.FF.Hzero(w)
-        Hscalar = 0
+        Hscalar = self.FF.Hscalar(w)
         return self.F(q2) * (-2 * (Hplus + Hminus) * Hscalar * self.FF.m_L ** 2 - 2 * Hzero * (Hplus - Hminus) * q2)
 
 
@@ -111,7 +111,8 @@ class AngularCoefficientsDpi:
 
 
     def J7(self, q2):
-        return self.F(q2) * (0)
+        return 0
+        raise NotImplemented
 
 
     def J8(self, q2):
