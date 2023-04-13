@@ -20,9 +20,12 @@ spectra.
     install_requires=[
         'numpy',
         'scipy',
+        'numba',
+        'setuptools',
+        'uncertainties',
     ],
     extras_require={
-        "examples":  ['matplotlib', 'jupyterlab'],
+        "examples":  ['matplotlib', 'jupyterlab', 'gvar'],
     },
     long_description=readme,
     long_description_content_type='text/markdown',
