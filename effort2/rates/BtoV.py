@@ -25,8 +25,6 @@ class BtoV:
 
         TODO: 
             * Add Glebsch Gordan coefficient to differ between B+ and B0 decays.
-            * Test the pre integrated rate vs numerical integration of the full rate.
-            * Implement switch to either use scipy/numpy default or enable some extra features to support propagation of uncertainties for the cost of extra run time.
 
         Nota bene:
             * If you use a form factor parametrization where you can/want to absorb eta_EW and/or Vcb into the definition of the form factor, initialize this class setting both values as 1.
