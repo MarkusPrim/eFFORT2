@@ -10,16 +10,13 @@ class BtoV:
     def __init__(
         self, 
         FF: None,
-        Vcb: float, 
+        Vxb: float, 
         m_B: float = None, 
         m_V: float = None,
         m_L: float = None,
         G_F: float = 1.1663787e-5,
         eta_EW: float = 1.0066,
         BR_Dstar_decay: float = 1,
-        VminusA: float = 1,
-        VplusA: float = 0,
-        use_PHSP: bool = True,
         ):
         """Initialize a class for calculating decay rate of B to Vector meson decays.
 
@@ -32,7 +29,7 @@ class BtoV:
             * Using the exact boundaries of w on the integration process might cause issues. Try adding/subtracting an epsilon to wmin/wmax to resolve the issue.
 
         Args:
-            Vcb (float): CKM parameter Vcb.
+            Vxb (float): CKM parameter Vcb.
             m_B (float): B meson mass. It is assumed that this value will never change when handling caches.
             m_V (float): V(ector) meson mass. It is assumed that this value will never change when handling caches.
             m_L (float): Lepton mass. Currently it only limits the kinematic phase-space, i.e. ``self.w_max`` via q2_min = m_L ** 2,
@@ -44,7 +41,7 @@ class BtoV:
         assert 0 <= BR_Dstar_decay <= 1
         self.FF = FF
 
-        self.Vcb = Vcb
+        self.Vxb = Vxb
         self.mB = FF.m_B if m_B is None else m_B
         self.mV = FF.m_V if m_V is None else m_V
         self.mL = FF.m_L if m_L is None else m_L
@@ -64,14 +61,6 @@ class BtoV:
 
         # Helper variable to work with angular coefficients
         self.xi = self.GF ** 2 * self.mB ** 3 / 2 / np.pi ** 4 * self.eta_EW ** 2 * self.BR_Dstar_decay 
-
-        self.VminusA = VminusA
-        self.VplusA = VplusA
-        # These are required for the generator feature.
-        # self.rate_max = self.dGamma_dw_dcosL_dcosV_dchi(*self.dGamma_max())  # Add 10% on top just to be sure.
-
-        # Used for MC sampling
-        # self.rate_max = unp.nominal_values(self.dGamma_max())
 
         # Sign conventions, do not change.
         self.sign_alpha = +1
@@ -120,7 +109,7 @@ class BtoV:
         alpha = self.sign_alpha
         beta = self.sign_beta
         
-        rate_VminusA = 9 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+        return 9 / 32 * self.f(w) * self.N0 * self.Vxb ** 2 * (
             -(-1 + cosV ** 2) * (1 + cosL ** 2 + 2 * cosL * alpha) * Hminus ** 2
             -(-1 + cosV ** 2) * (1 + cosL ** 2 - 2 * cosL * alpha) * Hplus ** 2
             -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * (-cosL + beta) * np.cos(chi) * Hplus * Hzero
@@ -138,12 +127,6 @@ class BtoV:
 #            ) 
         )
         
-        return self.VminusA * rate_VminusA
-        # Hplus = -self.FF.Hminus(w)
-        # Hminus = -self.FF.Hplus(w)
-        # Hzero = -self.FF.Hzero(w)
-        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
-
 
     def DGamma_Dw_DcosL_DcosV_Dchi(
         self,
@@ -198,7 +181,7 @@ class BtoV:
         alpha = self.sign_alpha
         beta = self.sign_beta
 
-        rate_VminusA = quad(lambda w: -1 / 64 * self.f(w) * self.N0 * self.Vcb ** 2 *  (
+        return quad(lambda w: -1 / 64 * self.f(w) * self.N0 * self.Vxb ** 2 *  (
             +2 * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
             +6 * (chimax - chimin) * (cosLmax - cosLmin) * (cosLmax + cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * alpha * (Hminus(w) ** 2 - Hplus(w) ** 2)
             -2 * (chimax - chimin) * (3 * cosLmax + cosLmax ** 3 - cosLmin * (3 + cosLmin ** 2)) * (3 * cosVmax - cosVmax ** 3 - 3 * cosVmin + cosVmin ** 3) * (Hminus(w) ** 2 + Hplus(w) ** 2)
@@ -217,10 +200,6 @@ class BtoV:
                 0 # TODO
             ) 
         ), wmin, wmax)[0]
-
-
-        return self.VminusA * rate_VminusA
-        # return self.VminusA * rate_VminusA[0] + self.VplusA * rate_VplusA[0]
 
 
     def Gamma(self) -> float:
@@ -248,14 +227,11 @@ class BtoV:
         Hplus = self.FF.Hplus(w)
         Hminus = self.FF.Hminus(w)
         Hzero = self.FF.Hzero(w)
-        rate_VminusA =  -3 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+        return -3 / 32 * self.f(w) * self.N0 * self.Vxb ** 2 * (
             - 64 / 3 * np.pi * Hminus ** 2 
             - 64 / 3 * np.pi * Hplus ** 2 
             - 64 / 3 * np.pi * Hzero ** 2
             )
-
-        return self.VminusA * rate_VminusA
-        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
 
     def dGamma_dcosL(self, cosL: float) -> float:
@@ -265,16 +241,13 @@ class BtoV:
         Hzero = lambda w: self.FF.Hzero(w)
         alpha = self.sign_alpha
 
-        rate_VminusA = quad(
-            lambda w: -3 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+        return quad(
+            lambda w: -3 / 32 * self.f(w) * self.N0 * self.Vxb ** 2 * (
                 - 8 * np.pi * (1 + cosL ** 2 + 2 * cosL * alpha) * Hminus(w) ** 2 
                 - 8 * np.pi * (1 + cosL ** 2 - 2 * cosL * alpha) * Hplus(w) ** 2 
                 + 16 * np.pi * (-1 + cosL ** 2) * Hzero(w) ** 2
                 ), self.w_min, self.w_max
                 )[0]
-
-        return self.VminusA * rate_VminusA
-        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
 
     def dGamma_dcosV(self, cosV: float) -> float:
@@ -283,16 +256,13 @@ class BtoV:
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
 
-        rate_VminusA = quad(
-            lambda w: -3 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+        return quad(
+            lambda w: -3 / 32 * self.f(w) * self.N0 * self.Vxb ** 2 * (
                 + 16 * np.pi * (-1 + cosV ** 2) * Hminus(w) ** 2 
                 + 16 * np.pi * (-1 + cosV ** 2) * Hplus(w) ** 2 
                 - 32 * np.pi * cosV ** 2 * Hzero(w) ** 2
                 ),self.w_min, self.w_max
                 )[0]
-
-        return self.VminusA * rate_VminusA
-        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
 
     def dGamma_dchi(self, chi: float) -> float:
@@ -300,17 +270,14 @@ class BtoV:
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
-        rate_VminusA =  quad(
-            lambda w: -1 / 32 * self.f(w) * self.N0 * self.Vcb ** 2 * (
+        return quad(
+            lambda w: -1 / 32 * self.f(w) * self.N0 * self.Vxb ** 2 * (
                 - 32 * Hminus(w) ** 2 
                 + 32 * np.cos(2 * chi) * Hminus(w) * Hplus(w) 
                 - 32 * Hplus(w) ** 2 
                 - 32 * Hzero(w) ** 2
                 ), self.w_min, self.w_max
                 )[0]
-
-        return self.VminusA * rate_VminusA
-        # return self.VminusA * rate_VminusA + self.VplusA * rate_VplusA
 
 
     def dGamma_max(self) -> float:
@@ -334,43 +301,6 @@ class BtoV:
             disp=False
             )
         return self.dGamma_dw_dcosL_dcosV_dchi(*x_max)
-
-
-    def sample_points(self, N) -> np.array:
-        """Use the hit-or-miss method until a single point is found.
- 
-        Args:
-            N (int): Sampling size to make efficient use of the random number generator.
- 
-        Returns:
-            list: Returns a set of random points (w, cosL, cosV, chi). The length of the array is non-deterministic (generator efficiency * sampling size).
-        """
-        x = np.array([
-            scipy.stats.uniform.rvs(self.w_min, self.w_max - self.w_min, size=N),
-            scipy.stats.uniform.rvs(self.cosL_min, self.cosL_max - self.cosL_min, size=N),
-            scipy.stats.uniform.rvs(self.cosV_min, self.cosV_max - self.cosV_min, size=N),
-            scipy.stats.uniform.rvs(self.chi_min, self.chi_max - self.chi_min, size=N)
-        ]).transpose()
-        f = scipy.stats.uniform.rvs(0, self.rate_max, size=N)
-        return [(*_x, _f) for _x, _f in zip(x, f) if self.dGamma_dw_dcosL_dcosV_dchi(*_x) > _f]
- 
- 
-    def generate_events(self, N):
-        """Generate the requested number of events.
- 
-        The efficiency of the hit-or.miss method is roughly 25%. To make efficient use of the random number generator of scipy, we over-sample by a factor of 5.
-        This way we should usually be able to generate the requested number of events in one go.
- 
-        Args:
-            N (int): Number of events to be generated.
- 
-        Returns:
-            np.array: Array of random data points (w, cosL, cosV, chi) drawn from the differentical decay rate.
-        """
-        events = []
-        while len(events) < N:
-            events += self.sample_points(N*5)
-        return np.array(events[:N])
 
 
 if __name__ == "__main__":

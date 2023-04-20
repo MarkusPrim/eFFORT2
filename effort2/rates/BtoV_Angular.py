@@ -8,15 +8,13 @@ class BtoV:
     def __init__(
         self, 
         Angular: None,
-        Vcb: float, 
+        Vxb: float, 
         m_B: float = None, 
         m_V: float = None,
         m_L: float = None,
         G_F: float = 1.1663787e-5,
         eta_EW: float = 1.0066,
         BR_Dstar_decay: float = 1,
-        VminusA: float = 1,
-        VplusA: float = 0,
         ):
         """Initialize a class for calculating decay rate of B to Vector meson decays.
 
@@ -29,7 +27,7 @@ class BtoV:
             * Using the exact boundaries of w on the integration process might cause issues. Try adding/subtracting an epsilon to wmin/wmax to resolve the issue.
 
         Args:
-            Vcb (float): CKM parameter Vcb.
+            Vxb (float): CKM parameter Vxb.
             m_B (float): B meson mass. It is assumed that this value will never change when handling caches.
             m_V (float): V(ector) meson mass. It is assumed that this value will never change when handling caches.
             m_L (float): Lepton mass. Currently it only limits the kinematic phase-space, i.e. ``self.w_max`` via q2_min = m_L ** 2,
@@ -41,7 +39,7 @@ class BtoV:
         assert 0 <= BR_Dstar_decay <= 1
         self.Angular = Angular
 
-        self.Vcb = Vcb
+        self.Vxb = Vxb
         self.mB = Angular.FF.m_B if m_B is None else m_B
         self.mV = Angular.FF.m_V if m_V is None else m_V
         self.mL = Angular.FF.m_L if m_L is None else m_L
@@ -100,7 +98,7 @@ class BtoV:
         J8  = self.Angular.J8(q2)
         J9  = self.Angular.J9(q2)
         
-        rate = self.A * self.Vcb ** 2 * (
+        return self.A * self.Vxb ** 2 * (
             (1 - cosV ** 2) * J1s + cosV ** 2 * J1c
             + (-1 + 2 * cosL ** 2) * (cosV ** 2 * J2c + (1 - cosV ** 2) * J2s)
             + cosL * (cosV ** 2 * J6c + (1 - cosV ** 2) * J6s)
@@ -112,8 +110,6 @@ class BtoV:
             + (1 - cosL ** 2) * (1 - cosV ** 2) * J9 * np.sin(2 * chi)
         )
 
-        return rate
-    
 
     def DGamma_Dw_DcosL_DcosV_Dchi(
         self,
@@ -173,7 +169,7 @@ class BtoV:
         J8  = lambda w: self.Angular.J8(self.kinematics.q2(w))
         J9  = lambda w: self.Angular.J9(self.kinematics.q2(w))
 
-        rate = quad(lambda w: 1 / 18 * self.A * self.Vcb ** 2 * (
+        rate = quad(lambda w: 1 / 18 * self.A * self.Vxb ** 2 * (
             J1c(w) * 6 * (
             + chimax * cosLmax * cosVmax ** 3 - chimin * cosLmax * cosVmax ** 3 - chimax * cosLmin * cosVmax ** 3 + chimin * cosLmin * cosVmax ** 3 
             - chimax * cosLmax * cosVmin ** 3 + chimin * cosLmax * cosVmin ** 3 + chimax * cosLmin * cosVmin ** 3 - chimin * cosLmin * cosVmin ** 3
@@ -264,7 +260,7 @@ class BtoV:
         J1c = self.Angular.J1c(q2)
         J2s = self.Angular.J2s(q2)
         J2c = self.Angular.J2c(q2)
-        rate = 8 / 9 * np.pi * self.A * self.Vcb ** 2 * (
+        rate = 8 / 9 * np.pi * self.A * self.Vxb ** 2 * (
             3 * J1c + 6 * J1s - J2c - 2 *J2s
             ) 
         return rate
@@ -279,7 +275,7 @@ class BtoV:
         J6s = lambda w: self.Angular.J6s(self.kinematics.q2(w))
         J6c = lambda w: self.Angular.J6c(self.kinematics.q2(w))
         rate = quad(
-            lambda w: 4 / 3 * np.pi * self.A * self.Vcb ** 2 * (
+            lambda w: 4 / 3 * np.pi * self.A * self.Vxb ** 2 * (
             J1c(w) + 2 * J1s(w) - J2c(w) + 2 * cosL ** 2 * J2c(w) - 2 * J2s(w) + 4 * cosL ** 2 * J2s(w) + cosL * J6c(w) + 2 * cosL * J6s(w)
             ), self.w_min, self.w_max
             )[0]
@@ -293,7 +289,7 @@ class BtoV:
         J2s = lambda w: self.Angular.J2s(self.kinematics.q2(w))
         J2c = lambda w: self.Angular.J2c(self.kinematics.q2(w))
         rate = quad(
-            lambda w: 4 / 3 * np.pi * self.A * self.Vcb ** 2 * (
+            lambda w: 4 / 3 * np.pi * self.A * self.Vxb ** 2 * (
             3 * cosV ** 2 * J1c(w) - 3 * (-1 + cosV ** 2) * J1s(w) - cosV ** 2 * J2c(w) - J2s(w) + cosV ** 2 * J2s(w)
             ), self.w_min, self.w_max
             )[0]
@@ -309,7 +305,7 @@ class BtoV:
         J3  = lambda w: self.Angular.J3(self.kinematics.q2(w))
         J9  = lambda w: self.Angular.J9(self.kinematics.q2(w))
         rate = quad(
-            lambda w: 4 / 9 * self.A * self.Vcb ** 2 * (
+            lambda w: 4 / 9 * self.A * self.Vxb ** 2 * (
             3 * J1c(w) + 6 * J1s(w) - J2c(w) - 2 * J2s(w) + 4 * J3(w) * np.cos(2 * chi) + 4 * J9(w) * np.sin(2 * chi)
             ), self.w_min, self.w_max
             )[0]
