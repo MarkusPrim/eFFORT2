@@ -280,28 +280,5 @@ class BtoV:
                 )[0]
 
 
-    def dGamma_max(self) -> float:
-        """Return the maximum of the rate.
- 
-        This is used for the generator feature. 
- 
-        Nota bene: If the parameters change (Vxb and/or the form factors, this value will also change).
- 
-        Returns:
-            float: Maximum of the differential decay rate.
-        """
-        x_max = scipy.optimize.fmin(
-            func=lambda x: -self.dGamma_dw_dcosL_dcosV_dchi(*x),
-            x0=np.array([
-                (self.w_max + self.w_min) / 2,
-                (self.cosL_max + self.cosL_min) / 2,
-                (self.cosV_max + self.cosV_min) / 2,
-                (self.chi_max + self.chi_min) / 2
-                ]),
-            disp=False
-            )
-        return self.dGamma_dw_dcosL_dcosV_dchi(*x_max)
-
-
 if __name__ == "__main__":
     pass
