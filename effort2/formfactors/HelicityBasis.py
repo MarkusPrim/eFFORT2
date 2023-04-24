@@ -1,6 +1,5 @@
 import abc
 import numpy as np
-import numba as nb
 
 from effort2.formfactors.kinematics import Kinematics
 
