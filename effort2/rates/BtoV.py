@@ -1,8 +1,6 @@
 import numpy as np
-import scipy.stats
 from effort2.formfactors.kinematics import Kinematics
 from effort2.math.integrate import quad
-import uncertainties.unumpy as unp
 
 
 class BtoV:

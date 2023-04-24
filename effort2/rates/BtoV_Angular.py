@@ -169,7 +169,7 @@ class BtoV:
         J8  = lambda w: self.Angular.J8(self.kinematics.q2(w))
         J9  = lambda w: self.Angular.J9(self.kinematics.q2(w))
 
-        rate = quad(lambda w: 1 / 18 * self.A * self.Vxb ** 2 * (
+        return quad(lambda w: 1 / 18 * self.A * self.Vxb ** 2 * (
             J1c(w) * 6 * (
             + chimax * cosLmax * cosVmax ** 3 - chimin * cosLmax * cosVmax ** 3 - chimax * cosLmin * cosVmax ** 3 + chimin * cosLmin * cosVmax ** 3 
             - chimax * cosLmax * cosVmin ** 3 + chimin * cosLmax * cosVmin ** 3 + chimax * cosLmin * cosVmin ** 3 - chimin * cosLmin * cosVmin ** 3
@@ -229,8 +229,6 @@ class BtoV:
             + (cosLmax ** 3 - cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin))
             )
             ), wmin, wmax)[0]
-
-        return rate
 
 
     def Gamma(self) -> float:

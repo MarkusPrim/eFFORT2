@@ -1,10 +1,6 @@
 import numpy as np
-import scipy.stats
 from effort2.formfactors.kinematics import Kinematics
 from effort2.math.integrate import quad
-import uncertainties.unumpy as unp
-
-from effort2.rates.BtoV import BtoV
 
 
 class BtoP:
@@ -98,7 +94,7 @@ class BtoP:
         )
 
 
-    def DGamma_Dw_DcosL_DcosV_Dchi(
+    def DGamma_Dw_DcosL(
         self,
         wmin: float = None,
         wmax: float = None,
