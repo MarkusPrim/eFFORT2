@@ -41,19 +41,19 @@ class BtoP:
 
         self.Vxb = Vxb
         self.mB = FF.m_B if m_B is None else m_B
-        self.mV = FF.m_V if m_P is None else m_P
+        self.mP = FF.m_P if m_P is None else m_P
         self.mL = FF.m_L if m_L is None else m_L
         self.GF = G_F
         self.eta_EW = eta_EW
         self.BR_D_decay = BR_D_decay
 
         # Boundaries of the 4D rate. These assumptions are imposed in the analytical integrations in Mathematica.
-        self.kinematics = Kinematics(self.mB, self.mV, self.mL)
+        self.kinematics = Kinematics(self.mB, self.mP, self.mL)
         self.w_min, self.w_max = self.kinematics.w_range_numerical_stable
         self.cosL_min, self.cosL_max = self.kinematics.cosL_range
 
-        self.N0 = self.BR_Dstar_decay * self.GF ** 2 / (2*np.pi) ** 4 * self.eta_EW ** 2 / 12 / self.mB ** 2 
-        self.N0 *= (2 * self.mB * self.mV)  # Differential dq2/dw 
+        self.N0 = self.BR_D_decay * self.GF ** 2 / (2*np.pi) ** 4 * self.eta_EW ** 2 / 12 / self.mB ** 2 
+        self.N0 *= (2 * self.mB * self.mP)  # Differential dq2/dw 
 
 
     def f(self, w):

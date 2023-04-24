@@ -1,10 +1,86 @@
 import functools
 import numba as nb
 import numpy as np
-from effort2.formfactors.formFactorBtoC import FormFactorBToDstar
+from effort2.formfactors.HelicityBasis import FormFactorHQETBToP, FormFactorHQETBToV
 
 
-class BToDStarBGL(FormFactorBToDstar):
+def BGL_form_factor(z: float, p: float, phi: float, a: list) -> float:
+    """Calculates the BGL form factor.
+
+    Args:
+        z (float): BGL expansion parameter.
+        p (float): Corresponding Blaschke factors.
+        phi (float): Corresponding outer function.
+        a (list): Corresponding expansion coefficients.
+
+    Returns:
+        float: BGL form factor at given z.
+    """
+
+    return 1 / (p(z) * phi(z)) * sum([a_i * z ** n for n, a_i in enumerate(a)])
+
+
+
+class BToDBGL(FormFactorHQETBToP):
+
+    def __init__(
+            self, 
+            m_B: float, 
+            m_P: float, 
+            exp_coeff_plus: tuple,
+            exp_coeff_zero: tuple,
+            m_L: float = 0
+            ) -> None:
+        super().__init__(m_B, m_P, m_L)
+        self.BGL_form_factor = BGL_form_factor
+        self.set_expansion_coefficients(exp_coeff_plus, exp_coeff_zero)
+
+
+    def set_expansion_coefficients(self, exp_coeff_plus: tuple, exp_coeff_zero: tuple) -> None:
+        """Sets the expansion coefficients and imposes the constraint on c0.
+
+        Expects the coefficients in the following form:
+            * a+0, a+1, ...
+            * a00, a01, ...
+        The order for the expansion can be chosen arbitrarily.
+
+        Args:
+            exp_coeff_plus ([tuple]): Expansion coefficients for the form factor fplus.
+            exp_coeff_zero ([tuple]): Expansion coefficients for the form factor fzero.
+        """
+        self.expansion_coefficients_plus = [*exp_coeff_plus]
+        self.expansion_coefficients_zero = [*exp_coeff_zero]
+
+
+    def fplus(self, w: float) -> float:
+        z = self.z(w)
+        return self.BGL_form_factor(z, lambda x: self.blaschke_factor_plus(x), self.phi_plus, self.expansion_coefficients_plus)
+
+
+    def fzero(self, w:float) -> float:
+        z = self.z(w)
+        return self.BGL_form_factor(z, lambda x: self.blaschke_factor_zero(x), self.phi_zero, self.expansion_coefficients_zero)
+
+    
+    def blaschke_factor_plus(self, z: float) -> float:
+        return 1
+    
+
+    def blaschke_factor_zero(self, z: float) -> float:
+        return 1
+    
+
+    def phi_plus(self, z: float) -> float:
+        r = self.r
+        return 1.1213 * (1 + z) ** 2 * (1 - z) ** (1 / 2) * ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** -5
+    
+    
+    def phi_zero(self, z: float) -> float:
+        r = self.r
+        return 0.5299 * (1 + z) * (1 - z) ** (3 / 2) * ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** -4
+
+
+class BToDStarBGL(FormFactorHQETBToV):
 
     def __init__(
         self, 
@@ -20,6 +96,7 @@ class BToDStarBGL(FormFactorBToDstar):
         vector_poles: list = [6.337, 6.899, 7.012, 7.280], 
         ) -> None:
         super().__init__(m_B, m_V)
+        self.BGL_form_factor = BGL_form_factor
 
         # BGL specifics, default is given in arXiv:1703.08170v2
         self.chiT_plus33 = chiT_plus33
@@ -165,22 +242,6 @@ class BToDStarBGL(FormFactorBToDstar):
     def _phi_F1(z, r, n_i, chiT_minus33, m_B):
         return 1 / m_B ** 3 * (8 * n_i / 3 / np.pi / chiT_minus33) ** 0.5 \
                * r * (1 + z) * (1 - z) ** (5. / 2) / ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** 5
-
-
-    def BGL_form_factor(self, z: float, p: float, phi: float, a: list) -> float:
-        """Calculates the BGL form factor.
-
-        Args:
-            z (float): BGL expansion parameter.
-            p (float): Corresponding Blaschke factors.
-            phi (float): Corresponding outer function.
-            a (list): Corresponding expansion coefficients.
-
-        Returns:
-            float: BGL form factor at given z.
-        """
-
-        return 1 / (p(z) * phi(z)) * sum([a_i * z ** n for n, a_i in enumerate(a)])
 
 
 if __name__ == "__main__":

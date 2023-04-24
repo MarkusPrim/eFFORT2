@@ -1,7 +1,37 @@
-from effort2.formfactors.formFactorBtoC import FormFactorBToDstar
+from effort2.formfactors.HelicityBasis import FormFactorHQETBToP, FormFactorHQETBToV
 
 
-class BToDStarCLN(FormFactorBToDstar):
+class BToDCLN(FormFactorHQETBToP):
+
+    def __init__(
+            self, 
+            m_B: float, 
+            m_P: float, 
+            G_1: float,
+            rho2: float,
+            m_L: float = 0
+            ) -> None:
+        super().__init__(m_B, m_P, m_L)
+        self.G_1 = G_1
+        self.rho2 = rho2
+
+
+    def fzero(self, w: float) -> float:
+        return 0
+
+
+    def fplus(self, w: float) -> float:
+        r = self.r 
+        z = self.z(w)
+        return (1 + r) / 2 / r ** 0.5 * self.G(z)
+
+
+    def G(self, z: float) -> float:
+        rho2 = self.rho2
+        return self.G_1 * (1 - 8 * rho2 * z + (51 * rho2 - 10) * z ** 2 - (252 * rho2 - 84) * z ** 3)
+
+
+class BToDStarCLN(FormFactorHQETBToV):
 
     def __init__(
         self,

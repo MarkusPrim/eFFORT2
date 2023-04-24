@@ -250,20 +250,3 @@ class BToRhoBSZ(FormFactorBToU):
 
 
 BToOmegaBSZ = BToRhoBSZ
-
-
-
-#    @staticmethod
-#    @nb.njit(cache=True)
-#    def z(w: float) -> float:
-#        """Variable for the expansion used in BGL and CLN.
-#
-#        Args:
-#            w (float): [description]
-#
-#        Returns:
-#            float: [description]
-#        """
-#        term1 = np.sqrt(w + 1)
-#        term2 = np.sqrt(2)
-#        return (term1 - term2) / (term1 + term2)

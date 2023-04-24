@@ -2,6 +2,7 @@ import abc
 import numpy as np
 
 from effort2.formfactors.kinematics import Kinematics
+from effort2.math.functions import z
 
 
 class HelicityBasisBToP:
@@ -140,6 +141,7 @@ class FormFactorHQETBToP(HelicityBasisBToP):
         """
         super().__init__(m_B, m_P, m_L)
         self.r = self.m_P / self.m_B
+        self.z = z
     
 
     def V(self, w: float) -> float:
@@ -195,7 +197,8 @@ class FormFactorHQETBToV(HelicityBasisBToV):
         """
         super().__init__(m_B, m_V, m_L)
         self.rprime = 2 * np.sqrt(self.m_B * self.m_V) / (self.m_B + self.m_V)  # Equivalent to fDs
-    
+        self.z = z
+
 
     def A0(self, w: float) -> float:
         return self.R0(w) / self.rprime * self.h_A1(w)
