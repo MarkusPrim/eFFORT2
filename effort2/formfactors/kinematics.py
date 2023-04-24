@@ -42,8 +42,10 @@ class Kinematics:
     def p(self, q2):
         return np.sqrt( ( (self.m_B**2 + self.m_M**2 - q2)/(2*self.m_B) )**2 - self.m_M**2 )
 
+
     def q2(self, w):
         return self.m_B ** 2 + self.m_M ** 2 - 2 * w * self.m_B * self.m_M
+
 
     def w(self, q2):
         return (self.m_B ** 2 + self.m_M ** 2 - q2) / (2 * self.m_B * self.m_M)
