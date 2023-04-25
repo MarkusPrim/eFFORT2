@@ -87,6 +87,12 @@ class BToDBGL(FormFactorHQETBToP):
         return 0.5299 * (1 + z) * (1 - z) ** (3 / 2) * ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** -4
 
 
+    def __str__(self):
+        return f"""BGL B --> D Expansion coefficients
+a+ = {self.expansion_coefficients_plus}
+a0 = {self.expansion_coefficients_zero}"""
+
+
 class BToDStarBGL(FormFactorHQETBToV):
     """_summary_
 
@@ -319,6 +325,14 @@ class BToDStarBGL(FormFactorHQETBToV):
     def _phi_F2(z, r, n_i, chiL_1plus, m_B):
         return 8 * 2 ** 0.5 * r ** 2 * (n_i / np.pi / chiL_1plus) ** 0.5 \
                * (1 + z) ** 2 * (1 - z) ** -0.5 / ((1 + r) * (1 - z) + 2 * r ** 0.5 * (1 + z)) ** 4
+
+
+    def __str__(self):
+        return f"""BGL B --> D* Expansion coefficients
+a = {self.expansion_coefficients_a}
+b = {self.expansion_coefficients_b}
+c = {self.expansion_coefficients_c}
+d = {self.expansion_coefficients_d}"""
 
 
 if __name__ == "__main__":

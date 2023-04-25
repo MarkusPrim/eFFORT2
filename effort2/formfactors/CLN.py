@@ -39,6 +39,13 @@ class BToDCLN(FormFactorHQETBToP):
         return self.G_1 * (1 - 8 * rho2 * z + (51 * rho2 - 10) * z ** 2 - (252 * rho2 - 84) * z ** 3)
 
 
+    def __str__(self):
+        return f"""CLN B --> D Expansion coefficients
+G_1  = {self.G_1}
+rho2  = {self.rho2}
+"""
+
+
 class BToDStarCLN(FormFactorHQETBToV):
 
     def __init__(
@@ -116,4 +123,12 @@ class BToDStarCLN(FormFactorHQETBToV):
         """
         return self.R2_1 + 0.11 * (w - 1) - 0.06 * (w - 1) ** 2
 
+
+    def __str__(self):
+        return f"""CLN B --> D* Expansion coefficients
+h_A1_1  = {self.h_A1_1}
+rho2  = {self.rho2}
+R0_1  = {self.R0_1}
+R1_1  = {self.R1_1}
+R2_1  = {self.R2_1}"""
 
