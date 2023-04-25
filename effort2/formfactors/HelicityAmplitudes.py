@@ -5,7 +5,7 @@ from effort2.formfactors.kinematics import Kinematics
 from effort2.math.functions import z
 
 
-class HelicityBasisBToP:
+class HelicityAmplitudesBToP:
     """Helicity basis for B to Pseudoscalar transitions."""
 
     def __init__(
@@ -48,7 +48,7 @@ class HelicityBasisBToP:
         return 0
 
 
-class HelicityBasisBToV:
+class HelicityAmplitudesBToV:
     """Helicity basis for B to Vector transitions."""
 
     def __init__(
@@ -115,7 +115,7 @@ class HelicityBasisBToV:
         return 0
 
 
-class FormFactorHQETBToP(HelicityBasisBToP):
+class FormFactorHQETBToP(HelicityAmplitudesBToP):
     """Defines the form factors V and S for the B to Pseudoscalar transitions. 
     
     Implements the translation from the HQET basis f0 and f+ to V and S.
@@ -176,7 +176,7 @@ class FormFactorHQETBToP(HelicityBasisBToP):
         pass      
 
 
-class FormFactorHQETBToV(HelicityBasisBToV):
+class FormFactorHQETBToV(HelicityAmplitudesBToV):
     """Defines the form factors A0, A1, A2, and V for the B to Vector transitions. 
     
     Implements the translation from the HQET basis h_A1, R0, R1, R2 to A0, A1, A2, and V.

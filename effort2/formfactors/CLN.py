@@ -1,7 +1,14 @@
-from effort2.formfactors.HelicityBasis import FormFactorHQETBToP, FormFactorHQETBToV
+from effort2.formfactors.HelicityAmplitudes import FormFactorHQETBToP, FormFactorHQETBToV
 
 
 class BToDCLN(FormFactorHQETBToP):
+    """_summary_
+
+    Reference: https://link.aps.org/accepted/10.1103/PhysRevD.94.094008
+
+    Args:
+        FormFactorHQETBToP (_type_): _description_
+    """
 
     def __init__(
             self, 
@@ -17,7 +24,8 @@ class BToDCLN(FormFactorHQETBToP):
 
 
     def fzero(self, w: float) -> float:
-        return 0
+        r = self.r 
+        return self.fplus(w) * (4 * r) / (1 + r) ** 2 * (1 + w) / 2 * 1.0036 * (1 - 0.0068 * (w - 1) + 0.0017 * (w - 1) ** 2 - 0.0013 * (w - 1) ** 3)
 
 
     def fplus(self, w: float) -> float:
