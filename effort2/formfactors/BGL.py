@@ -111,6 +111,7 @@ class BToDStarBGL(FormFactorHQETBToV):
         exp_coeff_b: tuple,
         exp_coeff_c: tuple,
         exp_coeff_d: tuple = (0, ),
+        m_L: float = 0,
         chiT_plus33: float = 5.28e-4,  # TODO: Update?
         chiT_minus33: float = 3.07e-4, # TODO: Update?
         chiL_1plus: float = 1.9421e-2, # TODO: Check
@@ -119,7 +120,7 @@ class BToDStarBGL(FormFactorHQETBToV):
         vector_poles: list = [6.337, 6.899, 7.012, 7.280],        # TODO: Update?
         pseudoscalar_poles: list = [6.275, 6.842, 7.250],         # TODO: Check
         ) -> None:
-        super().__init__(m_B, m_V)
+        super().__init__(m_B, m_V, m_L)
         self.BGL_form_factor = BGL_form_factor
 
         # BGL specifics, default is given in arXiv:1703.08170v2
@@ -199,6 +200,14 @@ class BToDStarBGL(FormFactorHQETBToV):
         ))
 
 
+    # def h_A2(self, w):
+    #     r = self.r
+    #     hA1 = self.h_A1(w)
+    #     R0 = self.R0(w)
+    #     R2 = self.R2(w)
+    #     return -hA1 * (-1 + R0 + r * R0 - r * R2 - w + R2 * w) / (1 + r ** 2 - 2 * r * w)
+
+
     def h_A3(self, w):
         z = self.z(w)
         f = self.f(z)
@@ -212,9 +221,24 @@ class BToDStarBGL(FormFactorHQETBToV):
         mB ** 2 * r ** 0.5 * (-1 + w) * (1 + w) * (1 + r ** 2 - 2 * r * w)
         ))
 
+
+    # def h_A3(self, w):
+    #     r = self.r
+    #     hA1 = self.h_A1(w)
+    #     R0 = self.R0(w)
+    #     R2 = self.R2(w)
+    #     return -(hA1 * r - hA1 + r * R0 - hA1 * r ** 2 * R0 - hA1 * R2 + hA1 * r * w + hA1 * r * R2 * w) / (1 + r ** 2 - 2 * r * w)
+
+
     def h_V(self, w):
         z = self.z(w)
         return self.r ** 0.5 * self.m_B * self.g(z)
+
+
+    # def h_V(self, w):
+    #     hA1 = self.h_A1(w)
+    #     R1 = self.R1(w)
+    #     return hA1 * R1
 
 
     def R0(self, w):

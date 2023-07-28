@@ -88,9 +88,9 @@ class BtoP:
         Hzero = self.FF.Hzero(w)
         Hscalar = self.FF.Hscalar(w)
 
-        return -3 * np.pi * self.f(w) * self.N0 / 2 / q2 * (
+        return -3 * np.pi * self.f(w) * self.N0 * self.Vxb ** 2 / 2 / q2 * (
             (-1 + cosL ** 2) * q2 * Hzero ** 2
-            - mL * (-cosL * Hzero + Hscalar) ** 2
+            - mL ** 2 * (-cosL * Hzero + Hscalar) ** 2
         )
 
 
@@ -130,8 +130,8 @@ class BtoP:
         Hzero = lambda w: self.FF.Hzero(w)
         Hscalar = lambda w: self.FF.Hscalar(w)
 
-        return quad(lambda w: 1 / q2(w) * (cosLmax - cosLmin) * np.pi * self.f(w) * self.N0 * (
-            -((-3 + cosLmax ** 2 + cosLmax * cosLmin + cosLmin **2) * q2(w) * Hzero(w) ** 2)
+        return quad(lambda w: 1 / 2 / q2(w) * (cosLmax - cosLmin) * np.pi * self.f(w) * self.N0 * self.Vxb ** 2 * (
+            -((-3 + cosLmax ** 2 + cosLmax * cosLmin + cosLmin ** 2) * q2(w) * Hzero(w) ** 2)
             + mL ** 2 * (
             (cosLmax ** 2 + cosLmax * cosLmin + cosLmin ** 2) * Hzero(w) ** 2 
             - 3 * (cosLmax + cosLmin) * Hzero(w) * Hscalar(w)
@@ -159,9 +159,9 @@ class BtoP:
         Hzero = self.FF.Hzero(w)
         Hscalar = self.FF.Hscalar(w)
 
-        return np.pi * self.f(w) * self.N0 / q2 * (
+        return np.pi * self.f(w) * self.N0 * self.Vxb ** 2 / q2 * (
             2 * q2 * Hzero ** 2
-            + mL * (Hzero ** 2 + 3 * Hscalar ** 2)
+            + mL ** 2 * (Hzero ** 2 + 3 * Hscalar ** 2)
         )
 
 
