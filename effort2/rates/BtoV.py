@@ -114,15 +114,14 @@ class BtoV:
             -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * (-cosL - beta) * np.cos(chi) * Hminus * Hzero
             -4 * (-1 + cosL ** 2) * cosV ** 2 * Hzero ** 2
             -2 * (-1 + cosL ** 2) * (-1 + cosV ** 2) * np.cos(2 * chi) * Hplus * Hminus
-            + mL ** 2 / self.kinematics.q2(w) #* (  # TODO: Implementation needs to be checked against physics
-#                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * Hminus ** 2 
-#                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * Hplus ** 2
-#                -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * Hplus * (cosL * Hzero - Hscalar)
-#                +4 * cosV ** 2 * (-cosL * Hzero + Hscalar) ** 2
-#                + Hminus * (
-#            (-1 + cosL ** 2) * (-1 + cosV ** 2) * np.cos(2 * chi) * Hplus 
-#            + 4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * (-cosL * Hzero + Hscalar))
-#            ) 
+            + mL ** 2 / self.kinematics.q2(w) * (
+                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * Hminus ** 2
+                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * Hplus ** 2
+                -4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * Hplus * (cosL * Hzero - Hscalar)
+                +4 * cosV ** 2 * (-cosL * Hzero + Hscalar) ** 2
+                +(-1 + cosL ** 2) * (-1 + cosV ** 2) * np.cos(2 * chi) * Hplus * Hminus
+                +4 * (1 - cosL ** 2) ** 0.5 * cosV * (1 - cosV ** 2) ** 0.5 * np.cos(chi) * (-cosL * Hzero + Hscalar) * Hminus
+            )
         )
         
 
@@ -175,28 +174,39 @@ class BtoV:
         Hplus = lambda w: self.FF.Hplus(w)
         Hminus = lambda w: self.FF.Hminus(w)
         Hzero = lambda w: self.FF.Hzero(w)
+        Hscalar = lambda w: self.FF.Hscalar(w)
 
         alpha = self.sign_alpha
         beta = self.sign_beta
 
-        return quad(lambda w: -1 / 64 * self.f(w) * self.N0 * self.Vxb ** 2 *  (
-            +2 * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
-            +6 * (chimax - chimin) * (cosLmax - cosLmin) * (cosLmax + cosLmin) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * alpha * (Hminus(w) ** 2 - Hplus(w) ** 2)
-            -2 * (chimax - chimin) * (3 * cosLmax + cosLmax ** 3 - cosLmin * (3 + cosLmin ** 2)) * (3 * cosVmax - cosVmax ** 3 - 3 * cosVmin + cosVmin ** 3) * (Hminus(w) ** 2 + Hplus(w) ** 2)
+        return quad(lambda w: 1 / 64 * self.f(w) * self.N0 * self.Vxb ** 2 *  (
+            -2 * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
+            +6 * (chimax - chimin) * (cosLmax - cosLmin) * (cosLmax + cosLmin) * (3 * cosVmax - cosVmax ** 3 - 3 * cosVmin + cosVmin ** 3) * alpha * (Hminus(w) ** 2 - Hplus(w) ** 2)
+            +2 * (chimax - chimin) * (3 * cosLmax + cosLmax ** 3 - cosLmin * (3 + cosLmin ** 2)) * (3 * cosVmax - cosVmax ** 3 - 3 * cosVmin + cosVmin ** 3) * (Hminus(w) ** 2 + Hplus(w) ** 2)
             +12 * (
                 -(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5
                 ) * beta * (
-                    -cosLmax * (1 - cosLmax ** 2) ** 0.5 + cosLmin * (1 - cosLmin ** 2) ** 0.5 + np.arcsin(-cosLmax) - np.arcsin(-cosLmin)
+                    cosLmax * (1 - cosLmax ** 2) ** 0.5 - cosLmin * (1 - cosLmin ** 2) ** 0.5 + np.arcsin(cosLmax) - np.arcsin(cosLmin)
                     ) * (np.sin(chimax) - np.sin(chimin)) * (Hminus(w) - Hplus(w)) * Hzero(w)
-            -8 * (
+            +8 * (
                 -(1 - cosLmax ** 2) ** 0.5 + cosLmax ** 2 * (1 - cosLmax ** 2) ** 0.5 + (1 - cosLmin ** 2) ** 0.5 - cosLmin ** 2 * (1 - cosLmin ** 2) ** 0.5
                 ) * (
                     -(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5
                     ) * (np.sin(chimax) - np.sin(chimin)) * (Hminus(w) + Hplus(w)) * Hzero(w)
-            -8 * (chimax - chimin) * (3 * cosLmax - cosLmax ** 3 - 3 * cosLmin + cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * Hzero(w) ** 2
+            +8 * (chimax - chimin) * (3 * cosLmax - cosLmax ** 3 - 3 * cosLmin + cosLmin ** 3) * (cosVmax ** 3 - cosVmin ** 3) * Hzero(w) ** 2
             + mL ** 2 / self.kinematics.q2(w) * (
-                0 # TODO
-            ) 
+            (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (np.sin(2 * chimax) - np.sin(2 * chimin)) * Hminus(w) * Hplus(w)
+            +2 * (chimax - chimin) * (-3 * cosLmax + cosLmax ** 3 + 3 * cosLmin - cosLmin ** 3) * (-3 * cosVmax + cosVmax ** 3 + 3 * cosVmin - cosVmin ** 3) * (Hminus(w) ** 2 + Hplus(w) ** 2)
+            -8 * (-(1 - cosLmax ** 2) ** 0.5 + cosLmax ** 2 * (1 - cosLmax ** 2) ** 0.5 + (1 - cosLmin ** 2) ** 0.5 - cosLmin ** 2 * (1 - cosLmin ** 2) ** 0.5 ) * (
+                -(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5) * (
+                np.sin(chimax) - np.sin(chimin)) * (Hminus(w) + Hplus(w)) * Hzero(w)
+            +8 * (chimax - chimin) * (cosLmax ** 3 - cosLmin ** 3) * (cosVmax ** 3 -  cosVmin ** 3) * Hzero(w) ** 2
+            +12 * (-(1 - cosVmax ** 2) ** 0.5 + cosVmax ** 2 * (1 - cosVmax ** 2) ** 0.5 + (1 - cosVmin ** 2) ** 0.5 - cosVmin ** 2 * (1 - cosVmin ** 2) ** 0.5) * (
+                cosLmax * (1 - cosLmax ** 2) ** 0.5 - cosLmin * (1 - cosLmin ** 2) ** 0.5 + np.arcsin(cosLmax) - np.arcsin(cosLmin)) * (
+                np.sin(chimax) - np.sin(chimin)) * (Hminus(w) + Hplus(w)) * Hscalar(w)
+            -24 * (chimax - chimin) * (cosLmax - cosLmin) * (cosLmax + cosLmin) * (cosVmax ** 3 - cosVmin ** 3) * Hzero(w) * Hscalar(w)
+            +24 * (chimax - chimin) * (cosLmax - cosLmin) * (cosVmax ** 3 - cosVmin ** 3) * Hscalar(w) ** 2
+            )
         ), wmin, wmax)[0]
 
 
