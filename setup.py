@@ -34,4 +34,5 @@ spectra.
         "License :: OSI Approved :: MIT License "
     ],
     license='MIT',
+    version='0.1.0',  # version should be same as in effort2/__init__.py and CITATION.cff
 )
