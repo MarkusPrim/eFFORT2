@@ -10,19 +10,16 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
 
     def __init__(
         self,
-        m_c: float,
-        m_b: float,
-        params: tuple,
-        # m_B: float,
-        # m_V: float,
-        # m_L: float=0,
-        alphaS: float=0,
+        m_c: float=1.31,
+        m_b: float=4.71,
+        params: tuple=(0.70, 0.2, 0.6),
+        alphaS: float=0.26,
         LambdaBar: float=0.40,
         LambdaBarPrime: float=0.80,
         LambdaBarStar: float=0.76,
         chi1: float=0,
         chi2: float=0,
-    ):
+    ) -> None:
         super().__init__(m_c, m_b)
         self.m_c = m_c
         self.m_b = m_b
@@ -250,10 +247,10 @@ class BToDStarStarNarrow(DStStAlphaSCorrections):
 
     def __init__(
         self,
-        m_c: float,
-        m_b: float,
-        params: tuple,
-        alphaS: float=0,
+        m_c: float=1.31,
+        m_b: float=4.71,
+        params: tuple=(0.70, -1.6, -0.5, 2.9),
+        alphaS: float=0.26,
         LambdaBar: float=0.40,
         LambdaBarPrime: float=0.80,
         LambdaBarStar: float=0.76,
@@ -369,7 +366,7 @@ class BToDStarStarNarrow(DStStAlphaSCorrections):
         Fb = self.Fb(w)
         CV1 = self.CV1(w)
         CV3 = self.CV3(w)
-        return w - 2 - alphaS * ((2 - w) * CV1 + 2 * (w + 1) * CV3) - epsilonB * (w + 2) * Fb + epsilonC * (4 * (w * LambdaBarPrime - LambdaBar) + (w + 2)* tau1 + (2 + 3 * w) * tau2 - 2 (w + 6) * eta1 - 4 * (w - 1) * eta2 - (3 * w - 2) * eta3)
+        return w - 2 - alphaS * ((2 - w) * CV1 + 2 * (w + 1) * CV3) + epsilonB * (w + 2) * Fb + epsilonC * (4 * (w * LambdaBarPrime - LambdaBar) + (w + 2)* tau1 + (2 + 3 * w) * tau2 - 2 * (w + 6) * eta1 - 4 * (w - 1) * eta2 - (3 * w - 2) * eta3)
 
     def fA(
         self,

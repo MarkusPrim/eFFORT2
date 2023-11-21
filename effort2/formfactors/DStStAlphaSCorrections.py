@@ -14,7 +14,7 @@ class DStStAlphaSCorrections:
         m_b: float,
     ) -> None:
         self.z = m_c / m_b
-        self.wz = 0.5 (self.z + 1 / self.z)
+        self.wz = 0.5 * (self.z + 1 / self.z)
 
 
     def r(
