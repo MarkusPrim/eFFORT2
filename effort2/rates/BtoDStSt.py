@@ -49,7 +49,7 @@ class BtoD0St(BToDStarStarBroad):
 
         self.Z1, self.zetap, self.zeta1 = self.set_model_parameters(params)
 
-        self.r = m_D / m_B
+        self.rm = m_D / m_B
         self.rho = m_L / m_B
         
         self.Gamma0 = (G_F**2 * Vcb**2 * m_B**5) / (192 * np.pi**3)
@@ -57,21 +57,21 @@ class BtoD0St(BToDStarStarBroad):
         self.kinematics = Kinematics(m_B, m_D, m_L)
         self.w_min, self.w_max = self.kinematics.w_range_numerical_stable
 
-    
+
     def q2(
         self,
         w: float,
     ):
-        r = self.r
+        r = self.rm
         return 1 + r**2 - 2 * r * w
-    
+
     def dGamma_dw(
         self,
         w: float,
     ) -> float:
         Gamma0 = self.Gamma0
         rho = self.rho
-        r = self.r
+        r = self.rm
         q2 = self.q2(w)
         zeta = self.Z1 * (1 + self.zetap * (w - 1)) # LO expansion of IW functions: Equation (36) in arxiv:1711.03110
         gminus = self.gminus(w) * zeta
