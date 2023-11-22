@@ -20,7 +20,7 @@ class DStStAlphaSCorrections:
     def r(
         self,
         w: float,
-    ) -> float:
+    ):
         wp = w + np.sqrt(w**2 - 1)
         return np.log(wp) / np.sqrt(w**2 - 1)
 
@@ -96,7 +96,7 @@ class DStStAlphaSCorrections:
         wz = self.wz
         r = self.r(w)
         Omega = self.Omega(w)
-        return 1 / (6 * z * (w - wz)) * (2 * (w - 1) * ((3 * w + 1) * z - z**2 - 1) * r + (12 * z * (wz - w) - (z**2 -1) * np.log(z)) + 4 * z * (w - wz) * Omega)
+        return 1 / (6 * z * (w - wz)) * (2 * (w - 1) * ((3 * w + 1) * z - z**2 - 1) * r + (12 * z * (wz - w) - (z**2 - 1) * np.log(z)) + 4 * z * (w - wz) * Omega)
 
 
     def CA2(
