@@ -51,7 +51,7 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         """
         Z1, zetap, zeta1 = params
         return Z1, zetap, zeta1
-    
+
     def Gb(
         self,
         w: float,
@@ -62,6 +62,7 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         LambdaBar = self.LambdaBar
         LambdaBarStar = self.LambdaBarStar
         zeta1 = self.zeta1
+        # TO DO: redefine zeta1 here ?
         return ((1 + 2 * w) * LambdaBarStar - (2 + w) * LambdaBar) / (w + 1) - 2 * (w - 1) * zeta1
 
     # Form factors for D0*
@@ -79,7 +80,7 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         zeta1 = self.zeta1
         CP = self.CP(w)
         Gb = self.Gb(w)
-        return (w - 1) * (1 + alphaS * CP) + epsilonC * (3 * (w * LambdaBarStar - LambdaBar) - 2 * (w**2 - 1) * zeta1 + (w -1) * (6 * chi1 - 2 * (w + 1) * chi2) - epsilonB * (w + 1) * Gb)
+        return (w - 1) * (1 + alphaS * CP) + epsilonC * (3 * (w * LambdaBarStar - LambdaBar) - 2 * (w**2 - 1) * zeta1 + (w -1) * (6 * chi1 - 2 * (w + 1) * chi2)) - epsilonB * (w + 1) * Gb
 
     def gplus(
         self,
@@ -107,7 +108,7 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         CA1 = self.CA1(w)
         CA2 = self.CA2(w)
         CA3 = self.CA3(w)
-        return 1 + alphaS * (CA1 + 0.5 * (w - 1) * (CA2 + CA3)) + epsilonC * (6 * chi1 - 2 * (w + 1) * chi2)
+        return 1 + alphaS * (CA1 + 0.5 * (w - 1) * (CA2 - CA3)) + epsilonC * (6 * chi1 - 2 * (w + 1) * chi2)
 
     def gT(
         self,

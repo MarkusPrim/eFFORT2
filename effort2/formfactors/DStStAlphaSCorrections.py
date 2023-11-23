@@ -66,7 +66,7 @@ class DStStAlphaSCorrections:
         wz = self.wz
         r = self.r(w)
         Omega = self.Omega(w)
-        return 1 / (6 * z * (w - wz)) * (2 * (w + 1) * ((3 * w - 1) * z - z**2 - 1) * r + (12 * z * (wz - w) - (z**2 -1) * np.log(z)) + 4 * z * (w - wz) * Omega)
+        return 1 / (6 * z * (w - wz)) * (2 * (w + 1) * ((3 * w - 1) * z - z**2 - 1) * r + (12 * z * (wz - w) - (z**2 - 1) * np.log(z)) + 4 * z * (w - wz) * Omega)
     
     def CV2(
         self,
@@ -150,10 +150,5 @@ class DStStAlphaSCorrections:
         return 2 / (3 * (w - wz)) * ((w - z) * r + np.log(z))
 
 
-class IWFunctions:
-    """
-    Class to define the Isgure-Wise functions used in the BLR model for B -> D** form factors
-    """
-
-    def __init__(self) -> None:
-        pass
+if __name__ == "__main__":
+    pass
