@@ -77,9 +77,7 @@ class BtoD0St(BToDStarStarBroad):
         zeta = self.Z1 * (1 + self.zetap * (w - 1)) # LO expansion of IW functions: Equation (36) in arxiv:1711.03110
         gminus = self.gminus(w) * zeta
         gplus = self.gplus(w) * zeta
-        # return 4 * Gamma0 * rm**3 * np.sqrt(w**2 - 1) * (q2 - rho)**2 / q2**3 * (gminus**2 * (w - 1) * (rho *((1 + rm**2) * (2 * w - 1) + 2 * rm * (w - 2)) + (1 - rm)**2 * (w + 1) * q2) + gplus**2 * (w + 1) * (rho * ((1 + rm**2) * (2 * w + 1) - 2 * rm * (w + 2)) + (1 + rm)**2 * (w - 1) * q2) - 2 * gminus * gplus * (1 - rm**2) * (w**2 - 1) * (q2 + 2 * rho))
-        # return np.sqrt(w**2 - 1) * (gminus**2 * (w - 1) * (rho *((1 + rm**2) * (2 * w - 1) + 2 * rm * (w - 2)) + (1 - rm)**2 * (w + 1) * q2) + gplus**2 * (w + 1) * (rho * ((1 + rm**2) * (2 * w + 1) - 2 * rm * (w + 2)) + (1 + rm)**2 * (w - 1) * q2) - 2 * gminus * gplus * (1 - rm**2) * (w**2 - 1) * (q2 + 2 * rho))
-        return (q2 - rho)**2 / q2**3
+        return 4 * Gamma0 * rm**3 * np.sqrt(w**2 - 1) * (q2 - rho)**2 / q2**3 * (gminus**2 * (w - 1) * (rho *((1 + rm**2) * (2 * w - 1) + 2 * rm * (w - 2)) + (1 - rm)**2 * (w + 1) * q2) + gplus**2 * (w + 1) * (rho * ((1 + rm**2) * (2 * w + 1) - 2 * rm * (w + 2)) + (1 + rm)**2 * (w - 1) * q2) - 2 * gminus * gplus * (1 - rm**2) * (w**2 - 1) * (q2 + 2 * rho))
 
     def Gamma(
         self,
