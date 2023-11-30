@@ -65,7 +65,7 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         # TO DO: redefine zeta1 here ?
         return ((1 + 2 * w) * LambdaBarStar - (2 + w) * LambdaBar) / (w + 1) - 2 * (w - 1) * zeta1
 
-    # Form factors for D0*
+    # Form factors for 
     def gP(
         self,
         w: float,
@@ -126,7 +126,7 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         CT1 = self.CT1(w)
         return 1 + alphaS * CT1 + epsilonC * (3 * (w * LambdaBarStar - LambdaBar) / (w + 1) - 2 * (w - 1) * zeta1 + 6 * chi1 - 2 * (w + 1) * chi2) - epsilonB * Gb
 
-    # Form factors for D1*
+    # Form factors for 
     def gS(
         self,
         w: float,
