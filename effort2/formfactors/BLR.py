@@ -5,7 +5,7 @@ from effort2.formfactors.DStStAlphaSCorrections import DStStAlphaSCorrections
 
 class BToDStarStarBroad(DStStAlphaSCorrections):
     """
-    TO DO: add description
+    A class to compute the form factors for the two broad D** states (D0* and D1')
     """
 
     def __init__(
@@ -33,7 +33,6 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         self.Z1, self.zetap, self.zeta1 = self.set_model_parameters(params)
         # TO DO: check parameter values from Hammer
         # Scale mu = sqrt(mc*mb)
-        # Can ask Markus/Florian for details about BLR
         # Certain values depend on renorm scheme
         # The chromomagnetic terms chi1/2 are neglected in Hammer and certain Approximations.
         # I'm not sure whether they should be set to 0 with the most up-to-date fit of the 3 zeta parameters.
@@ -126,7 +125,6 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         CT1 = self.CT1(w)
         return 1 + alphaS * CT1 + epsilonC * (3 * (w * LambdaBarStar - LambdaBar) / (w + 1) - 2 * (w - 1) * zeta1 + 6 * chi1 - 2 * (w + 1) * chi2) - epsilonB * Gb
 
-    # Form factors for 
     def gS(
         self,
         w: float,
@@ -243,7 +241,7 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
 
 class BToDStarStarNarrow(DStStAlphaSCorrections):
     """
-    TO DO: add description
+    A class to compute the form factors for the two narrow D** states (D1 and D2)
     """
 
     def __init__(
@@ -286,7 +284,7 @@ class BToDStarStarNarrow(DStStAlphaSCorrections):
         T1, taup, tau1, tau2 = params
         return T1, taup, tau1, tau2
 
-    def Fp(
+    def Fb(
         self,
         w: float,
     ):
@@ -381,7 +379,6 @@ class BToDStarStarNarrow(DStStAlphaSCorrections):
         epsilonC = 1 / (2 * self.m_c)
         epsilonB = 1 / (2 * self.m_b)
         eta1 = self.eta1
-        eta2 = self.eta2
         eta3 = self.eta3
         Fb = self.Fb(w)
         CA1 = self.CA1(w)
@@ -499,7 +496,7 @@ class BToDStarStarNarrow(DStStAlphaSCorrections):
         epsilonC = 1 / (2 * self.m_c)
         eta2 = self.eta2
         CA2 = self.CA2(w)
-        return alphaS * CA2 - 2 * epsilonC (tau1 + eta2)
+        return 1. #alphaS * CA2 - 2 * epsilonC (tau1 + eta2)
 
     def kA3(
         self,

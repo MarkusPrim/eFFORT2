@@ -264,7 +264,7 @@ class BtoD1(BToDStarStarNarrow):
         return quad(lambda w: self.dGamma_dw(w), wmin, wmax)[0]
     
 
-class BToD2St(BToDStarStarNarrow):
+class BtoD2St(BToDStarStarNarrow):
 
     def __init__(
         self,
@@ -283,7 +283,7 @@ class BToD2St(BToDStarStarNarrow):
         eta1: float=0,
         eta2: float=0,
         eta3: float=0,
-    ) -> None:
+        ) -> None:
 
         super().__init__(
             m_c,
@@ -321,14 +321,14 @@ class BToD2St(BToDStarStarNarrow):
     def q2(
         self,
         w: float,
-    ):
+        ):
         rm = self.rm
         return 1 + rm**2 - 2 * rm * w
 
     def dGamma_dw(
         self,
         w: float,
-    ) -> float:
+        ) -> float:
         Gamma0 = self.Gamma0
         rho = self.rho
         rm = self.rm
@@ -338,13 +338,13 @@ class BToD2St(BToDStarStarNarrow):
         kA2 = self.kA2(w) * tau
         kA3 = self.kA3(w) * tau
         kV = self.kV(w) * tau
-        return (2/3) * Gamma0 * rm**3 * (w**2 - 1)**(3/2) * (q2 - rho)**2 / q2**3 * (kA1**2 * (2 * q2 *(2 * (w - rm)**2 + 3 * q2) + rho * (8 * (w - rm)**2 - 3 * q2)) + 2 * (w**2 - 1) * (kA2**2 * (2 * rm**2 * q2 (w**2 - 1) + rho * (3 * q2 + 4 * rm**2 * (w**2 - 1))) + kA3**2 * (2 * q2 * (w**2 - 1) + rho * (4 * (w - rm)**2 - q2)) + 3 * kV**2 * q2 * (q2 + rho/2) + 2 * kA1 * kA2 * (2 * rm * q2 * (w - rm) + rho * (3 - rm**2 - 2 * rm * w)) + 4 * kA1 * kA3 * (w - rm) * (q2 + 2 * rho) + 2 * kA2 * kA3 * (2 * rm * q2 * (w**2 - 1) + rho * (3 * w * q2 + 4 * rm * (w**2 - 1)))))
-    
+        return (2/3) * Gamma0 * rm**3 * (w**2 - 1)**(3/2) * (q2 - rho)**2 / q2**3 * (kA1**2 * (2 * q2 * (2 * (w - rm)**2 + 3 * q2) + rho * (8 * (w - rm)**2 - 3 * q2)) + 2 * (w**2 - 1) * (kA2**2 * (2 * rm**2 * q2 * (w**2 - 1) + rho * (3 * q2 + 4 * rm**2 * (w**2 - 1))) + kA3**2 * (2 * q2 * (w**2 - 1) + rho * (4 * (w - rm)**2 - q2)) + 3 * kV**2 * q2 * (q2 + rho/2) + 2 * kA1 * kA2 * (2 * rm * q2 * (w - rm) + rho * (3 - rm**2 - 2 * rm * w)) + 4 * kA1 * kA3 * (w - rm) * (q2 + 2 * rho) + 2 * kA2 * kA3 * (2 * rm * q2 * (w**2 - 1) + rho * (3 * w * q2 + 4 * rm * (w**2 - 1)))))
+
     def Gamma(
         self,
         wmin: float=None,
         wmax: float=None,
-    ) -> float:
+        ) -> float:
         wmin = self.w_min if wmin is None else wmin
         wmax = self.w_max if wmax is None else wmax
         assert self.w_min <= wmin < wmax <= self.w_max, f"{wmin}, {wmax}"
