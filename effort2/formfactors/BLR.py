@@ -31,7 +31,6 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         self.chi2 = chi2
 
         self.Z1, self.zetap, self.zeta1 = self.set_model_parameters(params)
-        # TO DO: check parameter values from Hammer
         # Scale mu = sqrt(mc*mb)
         # Certain values depend on renorm scheme
         # The chromomagnetic terms chi1/2 are neglected in Hammer and certain Approximations.
@@ -61,10 +60,8 @@ class BToDStarStarBroad(DStStAlphaSCorrections):
         LambdaBar = self.LambdaBar
         LambdaBarStar = self.LambdaBarStar
         zeta1 = self.zeta1
-        # TO DO: redefine zeta1 here ?
         return ((1 + 2 * w) * LambdaBarStar - (2 + w) * LambdaBar) / (w + 1) - 2 * (w - 1) * zeta1
 
-    # Form factors for 
     def gP(
         self,
         w: float,
@@ -496,7 +493,7 @@ class BToDStarStarNarrow(DStStAlphaSCorrections):
         epsilonC = 1 / (2 * self.m_c)
         eta2 = self.eta2
         CA2 = self.CA2(w)
-        return 1. #alphaS * CA2 - 2 * epsilonC (tau1 + eta2)
+        return alphaS * CA2 - 2 * epsilonC * (tau1 + eta2)
 
     def kA3(
         self,
